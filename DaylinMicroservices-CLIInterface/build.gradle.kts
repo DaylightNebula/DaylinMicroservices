@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "1.8.20-RC2"
+    id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
 group = "daylightnebula.daylinmicroservices.cli"
@@ -21,10 +22,20 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("ch.qos.logback:logback-classic:1.4.6")
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.9.2")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.9.2")
 }
 
 tasks.getByName<Test>("test") {
     useJUnitPlatform()
+}
+
+tasks {
+    named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+        archiveBaseName.set("CLIInterface")
+//        mergeServiceFiles()
+        manifest {
+            attributes(mapOf("Main-Class" to "daylightnebula.daylinmicroservices.cli.CLIInterfaceKt"))
+        }
+    }
 }
