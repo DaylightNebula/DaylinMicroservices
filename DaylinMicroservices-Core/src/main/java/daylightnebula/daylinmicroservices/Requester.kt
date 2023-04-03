@@ -1,24 +1,19 @@
 package daylightnebula.daylinmicroservices
 
 import io.ktor.client.*
-import io.ktor.client.call.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.time.withTimeout
-import kotlinx.coroutines.withTimeout
-import mu.KLogger
 import org.json.JSONObject
+import org.slf4j.Logger
 import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 
 internal object Requester {
 
-    fun rawRequest(logger: KLogger, address: String, json: JSONObject): CompletableFuture<JSONObject> {
+    fun rawRequest(logger: Logger, address: String, json: JSONObject): CompletableFuture<JSONObject> {
         val future = CompletableFuture<JSONObject>()
 
         // start a thread to run the request async

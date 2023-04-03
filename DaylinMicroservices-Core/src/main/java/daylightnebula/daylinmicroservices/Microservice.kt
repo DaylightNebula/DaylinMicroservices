@@ -17,27 +17,11 @@ import java.net.*
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.CompletableFuture
+import kotlin.collections.HashMap
 
 class Microservice(
-    // name and id for the service, these are used to identify the
-    private val name: String,
-    private val tags: List<String>,
-    val uuid: UUID = UUID.randomUUID(),
-
-    // port of this service, if zero, a port will be found automatically
-    private var port: Int = 0,
-
-    // an endpoint cannot return null, null is only returned as a result if there is an error
-    // this is used instead of ktor routing so that errors can be handled
-    private val endpoints: HashMap<String, (json: JSONObject) -> JSONObject> = hashMapOf(),
-
-    // multicast socket info, used for broadcasting service create and shutdown
-    private val multicastAddress: InetAddress = InetAddress.getByName("224.0.0.200"),
-    private val multicastPort: Int = 3000,
-    private val multicastSocket: MulticastSocket = MulticastSocket(multicastPort),
-
-    // logger
-    private val logger: KLogger = KotlinLogging.logger("Node ${name.ifBlank { uuid.toString() }}"),
+    private val config: MicroserviceConfig,
+    private val endpoints: HashMap<String, (json: JSONObject) -> JSONObject>,
 
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
@@ -76,58 +60,42 @@ class Microservice(
 
     // just start the server on this thread
     override fun run() {
-        // finish setting up sockets
-        multicastSocket.joinGroup(InetSocketAddress(multicastAddress, multicastPort), NetworkInterface.getByName("bge0"))
-
         // create microservice server and endpoints
         setupPort()
         setupDefaults()
-        server = embeddedServer(Netty, port = port, module = module)
+        server = embeddedServer(Netty, port = config.port, module = module)
 
         // setup health check
         val check = ImmutableRegCheck.builder()
-            .http("http://host.docker.internal:$port/")
+            .http(config.consulRefUrl)
             .interval("10s")
             .timeout("1s")
             .deregisterCriticalServiceAfter("1s")
             .build()
 
         // setup consul
-        consul = Consul.builder().withUrl("http://localhost:8500").build()
+        consul = Consul.builder().withUrl(config.consulUrl).build()
         consul.agentClient().register(
             ImmutableRegistration.builder()
-                .id(name)
-                .tags(tags)
-                .name(name)
+                .id(config.name)
+                .tags(config.tags)
+                .name(config.name)
                 .address("localhost")
-                .port(port)
+                .port(config.port)
                 .check(check)
                 .build()
         )
 
         // start server
         server.start(wait = false)
-        println("Created with port $port")
-
-        // broadcast join packet
-        broadcastPacket(getJoinPacket().toString(0).toByteArray())
+        println("Created with port ${config.port}")
     }
 
     // make request to services
     fun request(name: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
         val service = getService(name) ?: return null
         val address = "http://${service.address}:${service.port}/$endpoint"
-        return Requester.rawRequest(logger, address, json)
-    }
-
-    // function that sends a byte array to a given socket
-    private fun broadcastPacket(data: ByteArray) {
-        val socket = DatagramSocket()
-        socket.broadcast = true
-        val sizeBuffer = ByteBuffer.allocate(4).putInt(data.size).array()
-        socket.send(DatagramPacket(sizeBuffer, 4, multicastAddress, multicastPort))
-        socket.send(DatagramPacket(data, data.size, multicastAddress, multicastPort))
-        socket.close()
+        return Requester.rawRequest(config.logger, address, json)
     }
 
     // function that creates service join packet
@@ -136,7 +104,7 @@ class Microservice(
         if (!this::cachedJoinPacket.isInitialized)
             cachedJoinPacket = (endpoints["info"]?.let { it(JSONObject()) } ?: JSONObject())
                 .put("status", "join")
-                .put("port", port)
+                .put("port", config.port)
         return cachedJoinPacket
     }
 
@@ -151,13 +119,13 @@ class Microservice(
     // function that finds an open port if necessary
     private fun setupPort() {
         // if port has already been set, skip
-        if (port != 0) return
+        if (config.port != 0) return
 
         // grab a blank port by creating a server socket, getting its port and then close the server
         val sSocket = ServerSocket(0)
-        port = sSocket.localPort
+        config.port = sSocket.localPort
         sSocket.close()
-        logger.info("Found open port $port")
+        config.logger.info("Found open port ${config.port}")
     }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
@@ -170,15 +138,15 @@ class Microservice(
         val infoCallback = endpoints["info"] ?: { JSONObject() }
         endpoints["info"] = {
             infoCallback(it)
-                .put("name", name)
-                .put("uuid", uuid)
+                .put("name", config.name)
+                .put("tags", config.tags)
                 .put("endpoints", JSONArray().putAll(endpoints.keys))
         }
     }
 
     // dynamically create routing using the given endpoints
     private val module: Application.() -> Unit = {
-        logger.info("Creating endpoints...")
+        config.logger.info("Creating endpoints...")
         routing {
             endpoints.forEach { (name, callback) ->
                 get("/$name") {
@@ -200,19 +168,18 @@ class Microservice(
                     // send back result
                     this.call.respondText(resultString)
                 }
-                logger.info("Created endpoint /$name")
+                config.logger.info("Created endpoint /$name")
             }
         }
-        logger.info("Setup finished")
+        config.logger.info("Setup finished")
     }
 
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
-        if (!hidden) broadcastPacket(getClosePacket().toString(0).toByteArray())
         serviceCacheThread.dispose()
         consul.agentClient().deregister(name)
         server.stop(1000, 1000)
-        logger.info { "Shutdown $name, hidden = $hidden" }
+        config.logger.info("Shutdown $name, hidden = $hidden")
         super.join()
     }
 }
