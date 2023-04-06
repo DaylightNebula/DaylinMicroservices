@@ -2,7 +2,11 @@ package daylightnebula.daylinmicroservices
 
 import java.lang.Thread.sleep
 
-val service = Microservice("tester", listOf())
+val service = Microservice(
+    MicroserviceConfig(
+    "tester",
+    listOf()
+), endpoints = hashMapOf())
 fun main() {
     service.start()
 

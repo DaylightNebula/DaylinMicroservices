@@ -61,7 +61,6 @@ class Microservice(
     // just start the server on this thread
     override fun run() {
         // create microservice server and endpoints
-        setupPort()
         setupDefaults()
         server = embeddedServer(Netty, port = config.port, module = module)
 
@@ -114,18 +113,6 @@ class Microservice(
         if (!this::cachedClosePacket.isInitialized)
             cachedClosePacket = (endpoints["info"]?.let { it(JSONObject()) } ?: JSONObject()).put("status", "close")
         return cachedClosePacket
-    }
-
-    // function that finds an open port if necessary
-    private fun setupPort() {
-        // if port has already been set, skip
-        if (config.port != 0) return
-
-        // grab a blank port by creating a server socket, getting its port and then close the server
-        val sSocket = ServerSocket(0)
-        config.port = sSocket.localPort
-        sSocket.close()
-        config.logger.info("Found open port ${config.port}")
     }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
