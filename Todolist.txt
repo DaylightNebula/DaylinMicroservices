@@ -1,0 +1,47 @@
+===== Version 0.2 =====
+- [ ] File System Service
+  - Purpose:
+    - Some services may need persistently stored files that ARE NOT configs.
+    - This is would be a method of storing them that has redundancy and can be quickly referenced.
+    - This service would keep a log of ALL changes made to the files to keep track of changes that is kept in blocks so the whole log does not have to be kept in long term storage.
+    - This log should contain hashes of ALL files (but not directories)
+  - Tags: "file_system"
+  - Endpoints:
+    - [ ] list <path> [sorting = NOTHING (DEFAULT), ALPHABETICAL, AGE, AGE_REVERSE]
+      - Lists all files at the given path with the given sorting
+    - [ ] get <path>
+      - Returns a zip file of the given path (the directory or the file)
+      - If the file does not exist, return a error
+    - [ ] push <path> <file>
+      - Puts the given file at the given path
+      - Logs the change
+      - Populates to other file systems
+    - [ ] delete <path>
+      - Deletes the given path
+      - Logs the change
+      - Populates to other files systems
+      - If the file does not exist, return an error
+    - [ ] log <since unix time stamp> [path = root path] [sorting = USE THE SAME SYSTEM AS ABOVE]
+      - Returns the log since the given time
+      - If a path is given, only return changes in that path
+    - [ ] hash <path>
+      - Returns the hash at the path
+      - If directory, returns a list of files and their hashes in the path
+- [ ] Other changes
+  - [ ] Make sure services will work in docker containers with Consul
+  - [ ] Allow to reference other services by tag in request (optionally self, default false)
+  - [ ] Broadcast to all services with a given name or tag (optionally self, default false)
+  - [ ] File System Interface
+    - [ ] Get path
+      - Stores in a local cache, and checks the hashes
+    - [ ] Push path
+      - Pushes the files in the given path from their cache to the file system
+      - Verifies that the file is still in the cache
+    - [ ] Delete path
+      - You get the drill
+    - [ ] Has path changed [timestamp = the last the time file changed in the cache]
+      - Return true if the log has any changes since the given timestamp
+    - [ ] Does file exist
+      - Returns true if a file exists on the file system
+    - [ ] List path <path>
+      - Returns the list of files at the given path
