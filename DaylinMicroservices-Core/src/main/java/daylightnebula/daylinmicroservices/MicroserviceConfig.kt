@@ -68,6 +68,6 @@ data class MicroserviceConfig(
         if (consulRefUrl.isNotBlank()) return
 
         // set consul ref url
-        consulRefUrl = "http://localhost:$port/"
+        consulRefUrl = "http://host.docker.internal:$port/"
     }
 }
