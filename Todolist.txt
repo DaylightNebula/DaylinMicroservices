@@ -28,9 +28,10 @@
       - Returns the hash at the path
       - If directory, returns a list of files and their hashes in the path
 - [ ] Other changes
+  - [x] Change ids to use UUIDs
   - [ ] Make sure services will work in docker containers with Consul
-  - [ ] Allow to reference other services by tag in request (optionally self, default false)
-  - [ ] Broadcast to all services with a given name or tag (optionally self, default false)
+  - [x] Allow to reference other services by tag in request (optionally self, default false)
+  - [x] Broadcast to all services with a given name or tag (optionally self, default false)
     - Mark json objects has broadcasted
   - [ ] File System Interface
     - [ ] Get path
@@ -46,3 +47,4 @@
       - Returns true if a file exists on the file system
     - [ ] List path <path>
       - Returns the list of files at the given path
+  - [ ] Update CLI Interface with file system interface

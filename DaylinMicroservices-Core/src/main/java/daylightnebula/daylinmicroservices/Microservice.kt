@@ -4,6 +4,8 @@ import com.orbitz.consul.Consul
 import com.orbitz.consul.model.agent.ImmutableRegCheck
 import com.orbitz.consul.model.agent.ImmutableRegistration
 import com.orbitz.consul.model.health.Service
+import com.sun.security.ntlm.Server
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -29,14 +31,15 @@ class Microservice(
 ): Thread() {
 
     // server stuff
+    val uuid = UUID.randomUUID()
     private lateinit var server: NettyApplicationEngine
     private lateinit var consul: Consul
 
     // service cache
-    private var serviceCache = mutableMapOf<String, Service>()
+    private var serviceCache = mutableMapOf<UUID, Service>()
     private val serviceCacheThread = loopingThread(1000) {
         if (!this::consul.isInitialized) return@loopingThread
-        val curServices = consul.agentClient().services
+        val curServices = consul.agentClient().services.mapKeys { UUID.fromString(it.key) }
 
         // check for any new services (anything in new service list that isn't in the cache)
         val newServices = curServices.filter { !serviceCache.contains(it.key) }
@@ -46,17 +49,12 @@ class Microservice(
         }
 
         // check if there are any services that closed
-        val oldServices = serviceCache.filter { !curServices.contains(it.key) }
+        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
         oldServices.forEach {
             serviceCache.remove(it.key)
             onServiceClose(it.value)
         }
     }
-
-    // get service functions
-    fun getService(name: String): Service? { return serviceCache[name] }
-    fun getServices(): Collection<Service> { return serviceCache.values }
-    fun getServiceWithTag(tag: String): Service? { return serviceCache.values.firstOrNull { it.tags.contains(tag) } }
 
     // just start the server on this thread
     override fun run() {
@@ -76,7 +74,7 @@ class Microservice(
         consul = Consul.builder().withUrl(config.consulUrl).build()
         consul.agentClient().register(
             ImmutableRegistration.builder()
-                .id(config.name)
+                .id(uuid.toString())
                 .tags(config.tags)
                 .name(config.name)
                 .address("localhost")
@@ -90,11 +88,41 @@ class Microservice(
         println("Created with port ${config.port}")
     }
 
+    // get service functions
+    fun getService(uuid: UUID): Service? { return serviceCache[uuid] }
+    fun getServiceWithName(name: String): Map.Entry<UUID, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
+    fun getServiceWithTag(tag: String): Map.Entry<UUID, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
+    fun getServices(): Map<UUID, Service> { return serviceCache }
+    fun getServicesWithName(name: String): Map<UUID, Service> { return serviceCache.filter { it.value.service == name } }
+    fun getServicesWithTag(tag: String): Map<UUID, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
+
     // make request to services
-    fun request(name: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
-        val service = getService(name) ?: return null
+    fun request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<JSONObject> {
+        json.put("broadcasted", false)
         val address = "http://${service.address}:${service.port}/$endpoint"
         return Requester.rawRequest(config.logger, address, json)
+    }
+    fun requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+        val service = getService(uuid) ?: return null
+        return request(service, endpoint, json)
+    }
+    fun requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+        val serviceEntry = getServiceWithName(name) ?: return null
+        return request(serviceEntry.value, endpoint, json)
+    }
+    fun requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+        val serviceEntry = getServiceWithTag(tag) ?: return null
+        return request(serviceEntry.value, endpoint, json)
+    }
+
+    // broadcast to services
+    fun broadcastRequestByName(name: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
+        json.put("broadcasted", true)
+        return getServicesWithName(name).map { entry -> request(entry.value, endpoint, json) }
+    }
+    fun broadcastRequestByTag(tag: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
+        json.put("broadcasted", true)
+        return getServicesWithTag(tag).map { entry -> request(entry.value, endpoint, json) }
     }
 
     // function that creates service join packet

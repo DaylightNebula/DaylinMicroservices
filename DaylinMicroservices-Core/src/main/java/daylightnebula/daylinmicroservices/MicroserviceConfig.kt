@@ -7,15 +7,17 @@ import org.slf4j.Logger
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.net.ServerSocket
+import java.util.*
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
-    val name: String,               // the name of the microservice
-    val tags: List<String>,         // the tags of the microservice, like what its type is
-    var port: Int = 0,              // the port that this service will run on
-    var consulUrl: String = "",     // the url that consul is on
-    var consulRefUrl: String = "",  // this is what consul will use to reference this microservice
-    val logger: Logger =            // the logger that this service will write its output too
+    val name: String,                   // the name of the microservice
+    val tags: List<String>,             // the tags of the microservice, like what its type is
+    val uuid: UUID = UUID.randomUUID(),  // the unique ID of the service
+    var port: Int = 0,                  // the port that this service will run on
+    var consulUrl: String = "",         // the url that consul is on
+    var consulRefUrl: String = "",      // this is what consul will use to reference this microservice
+    val logger: Logger =                // the logger that this service will write its output too
         KotlinLogging.logger("Microservice $name")
 ) {
     init {
@@ -31,6 +33,10 @@ data class MicroserviceConfig(
     constructor(json: JSONObject): this(
         json.optString("name", ""),
         json.optJSONArray("tags")?.map { it as String } ?: listOf(),
+        if (json.has("uuid"))
+            try { UUID.fromString("uuid") }
+            catch (ex: Exception) { ex.printStackTrace(); UUID.randomUUID() }
+        else UUID.randomUUID(),
         json.optInt("port", 0),
         json.optString("consulUrl", ""),
         json.optString("consulRefUrl", "")

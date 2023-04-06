@@ -27,6 +27,9 @@ Arguments (in this order in Kotlin):
 - tags: List of strings
   - A list of tags given to the service.  Services may broadcast json packets to all services with a given tag.
   - For example: when a change to the file system is requested, ALL services with the tag "file_system" will receive that change request.
+- uuid: UUID
+  - A unique identifier for this service.
+  - By default, this is a random UUID.
 - port: Int
   - Representing the port for the service to run on.
   - If not set or set to 0, the service will automatically find an open port on the host machine.
@@ -49,6 +52,7 @@ Here is an example json config:
   "name": "tester",
   "tags": [ "tester" ],
   "port": 54345,
+  "uuid": "d79337df-6bd2-4da1-837b-e64c8cd70318",
   "consulUrl": "https://localhost:8500/",
   "consulRefUrl": "http://localhost:54345/"
 }
