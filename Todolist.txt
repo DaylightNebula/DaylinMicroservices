@@ -15,11 +15,11 @@
     - [ ] push <path> <file>
       - Puts the given file at the given path
       - Logs the change
-      - Populates to other file systems
+      - Populates to other file systems (if json is not marked broadcasted)
     - [ ] delete <path>
       - Deletes the given path
       - Logs the change
-      - Populates to other files systems
+      - Populates to other files systems (if json is not marked broadcasted)
       - If the file does not exist, return an error
     - [ ] log <since unix time stamp> [path = root path] [sorting = USE THE SAME SYSTEM AS ABOVE]
       - Returns the log since the given time
@@ -31,6 +31,7 @@
   - [ ] Make sure services will work in docker containers with Consul
   - [ ] Allow to reference other services by tag in request (optionally self, default false)
   - [ ] Broadcast to all services with a given name or tag (optionally self, default false)
+    - Mark json objects has broadcasted
   - [ ] File System Interface
     - [ ] Get path
       - Stores in a local cache, and checks the hashes

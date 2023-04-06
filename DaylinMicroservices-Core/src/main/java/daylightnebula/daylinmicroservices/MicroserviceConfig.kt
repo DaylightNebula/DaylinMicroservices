@@ -1,7 +1,7 @@
 package daylightnebula.daylinmicroservices
 
-import mu.KLogger
 import mu.KotlinLogging
+import org.apache.commons.lang3.SystemUtils
 import org.json.JSONObject
 import org.slf4j.Logger
 import java.io.File
@@ -32,8 +32,8 @@ data class MicroserviceConfig(
         json.optString("name", ""),
         json.optJSONArray("tags")?.map { it as String } ?: listOf(),
         json.optInt("port", 0),
-        json.optString("consulUrl", "http://localhost:8500"),
-        json.optString("consulRefUrl", "http://host.docker.internal:${json.optInt("port", 0)}/")
+        json.optString("consulUrl", ""),
+        json.optString("consulRefUrl", "")
     )
 
     // load from a json object in a file
@@ -50,7 +50,7 @@ data class MicroserviceConfig(
         val sSocket = ServerSocket(0)
         port = sSocket.localPort
         sSocket.close()
-        logger.info("Found open port ${port}")
+        logger.info("Found open port $port")
     }
 
     // function that sets up the consul url to defaults if necessary
@@ -68,6 +68,6 @@ data class MicroserviceConfig(
         if (consulRefUrl.isNotBlank()) return
 
         // set consul ref url
-        consulRefUrl = "http://host.docker.internal:$port/"
+        consulRefUrl = if (SystemUtils.IS_OS_LINUX) "http://localhost:$port/" else "http://host.docker.internal:$port/"
     }
 }
