@@ -10,7 +10,7 @@
     - [ ] list <path> [sorting = NOTHING (DEFAULT), ALPHABETICAL, AGE, AGE_REVERSE]
       - Lists all files at the given path with the given sorting
     - [ ] get <path>
-      - Returns a zip file of the given path (the directory or the file)
+      - Returns a file of the given path (the directory or the file)
       - If the file does not exist, return a error
     - [ ] push <path> <file>
       - Puts the given file at the given path
