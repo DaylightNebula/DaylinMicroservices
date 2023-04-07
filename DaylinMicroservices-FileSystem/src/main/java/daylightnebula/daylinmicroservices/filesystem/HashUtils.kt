@@ -1,8 +1,9 @@
 
-// Code by LongClipeus (link: https://gist.github.com/LongClipeus/84db46e7d9714f67c4cbc40a67c8be1e)
+// Code originally by LongClipeus (link: https://gist.github.com/LongClipeus/84db46e7d9714f67c4cbc40a67c8be1e)
 
 package daylightnebula.daylinmicroservices.filesystem
 
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
@@ -12,15 +13,13 @@ object HashUtils {
 
     const val STREAM_BUFFER_LENGTH = 1024
 
-    fun getCheckSumFromFile(digest: MessageDigest, filePath: String): String {
-        val file = File(filePath)
-        return getCheckSumFromFile(digest, file)
-    }
-
-    fun getCheckSumFromFile(digest: MessageDigest, file: File): String {
-        val fis = FileInputStream(file)
-        val byteArray = updateDigest(digest, fis).digest()
-        fis.close()
+    // get checksum functions
+    fun getCheckSumFromFile(digest: MessageDigest, filePath: String): String = getChecksum(digest, FileInputStream(File(filePath)))
+    fun getCheckSumFromFile(digest: MessageDigest, file: File): String = getChecksum(digest, FileInputStream(file))
+    fun getChecksumFromBytes(digest: MessageDigest, bytes: ByteArray): String = getChecksum(digest, ByteArrayInputStream(bytes))
+    fun getChecksum(digest: MessageDigest, inputStream: InputStream): String {
+        val byteArray = updateDigest(digest, inputStream).digest()
+        inputStream.close()
         val hexCode = StringUtils.encodeHex(byteArray, true)
         return String(hexCode)
     }

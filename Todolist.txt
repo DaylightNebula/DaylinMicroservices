@@ -6,25 +6,25 @@
     - This service would keep a log of ALL changes made to the files to keep track of changes that is kept in blocks so the whole log does not have to be kept in long term storage.
     - This log should contain hashes of ALL files (but not directories)
   - Tags: "file_system"
-  - Endpoints:
-    - [ ] list <path> [sorting = NOTHING (DEFAULT), ALPHABETICAL, AGE, AGE_REVERSE]
+  - Endpoints: ("-" means the backbone is ready but no endpoint is created yet)
+    - [-] list <path>
       - Lists all files at the given path with the given sorting
-    - [ ] get <path>
+    - [-] get <path>
       - Returns a file of the given path (the directory or the file)
       - If the file does not exist, return a error
-    - [ ] push <path> <file>
+    - [-] push <path> <file>
       - Puts the given file at the given path
       - Logs the change
       - Populates to other file systems (if json is not marked broadcasted)
-    - [ ] delete <path>
+    - [-] delete <path>
       - Deletes the given path
       - Logs the change
       - Populates to other files systems (if json is not marked broadcasted)
       - If the file does not exist, return an error
-    - [ ] log <since unix time stamp> [path = root path] [sorting = USE THE SAME SYSTEM AS ABOVE]
+    - [-] change log <since unix time stamp> [path = root path]
       - Returns the log since the given time
       - If a path is given, only return changes in that path
-    - [ ] hash <path>
+    - [-] hash <path>
       - Returns the hash at the path
       - If directory, returns a list of files and their hashes in the path
 - [ ] Other changes
