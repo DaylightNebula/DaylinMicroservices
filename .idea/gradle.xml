@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/DaylinMicroservices-CLIInterface" />
             <option value="$PROJECT_DIR$/DaylinMicroservices-Core" />
+            <option value="$PROJECT_DIR$/DaylinMicroservices-FileSystem" />
           </set>
         </option>
       </GradleProjectSettings>

@@ -1,2 +1,5 @@
 /DaylinMicroservices-CLIInterface/build/
 /DaylinMicroservices-Core/build/
+/cache/
+/files/
+/filelog.json
