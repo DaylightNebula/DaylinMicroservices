@@ -1,5 +1,7 @@
 package daylightnebula.daylinmicroservices.filesystem
 
+import daylightnebula.daylinmicroservices.filesysteminterface.HashUtils
+import daylightnebula.daylinmicroservices.filesysteminterface.makeSureExists
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -197,15 +199,15 @@ object FileSystemFiles {
     }
 
     // get change log functions
-    fun getChangeLog(sinceTime: Long): Map<String, File> {
-        val map = hashMapOf<String, File>()
+    fun getChangeLog(sinceTime: Long): Map<String, String> {
+        val map = hashMapOf<String, String>()
         populateChangeLogMap(map, cacheTree, sinceTime)
         return map
     }
-    private fun populateChangeLogMap(map: HashMap<String, File>, root: LogEntryDirectory, sinceTime: Long) {
+    private fun populateChangeLogMap(map: HashMap<String, String>, root: LogEntryDirectory, sinceTime: Long) {
         root.children.forEach { (path, element) ->
             if (element is LogEntry && element.lastUpdate >= sinceTime) {
-                map[path] = element.file
+                map[path] = element.hash
             } else if (element is LogEntryDirectory)
                 populateChangeLogMap(map, element, sinceTime)
         }
@@ -250,21 +252,4 @@ object FileSystemFiles {
                 .put("hash", hash)
         }
     }
-}
-
-fun File.makeSureExists(isDirectory: Boolean, defaultText: String = ""): File {
-    // if type does not match but this file exists, delete the old one
-    if (this.exists() && isDirectory != isDirectory()) this.delete()
-
-    // if this file does not exist or the type does not match, make the file or directory exist
-    if (!this.exists() || isDirectory() != isDirectory) {
-        if (isDirectory) mkdirs()
-        else {
-            if (parentFile != null) parentFile.mkdirs()
-            writeText(defaultText)
-        }
-    }
-
-    // return this so that this can be used for something else
-    return this
 }

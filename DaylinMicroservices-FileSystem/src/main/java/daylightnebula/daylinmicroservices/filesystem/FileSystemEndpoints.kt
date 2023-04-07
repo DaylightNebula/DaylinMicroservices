@@ -37,7 +37,7 @@ val endpoints = hashMapOf<String, (json: JSONObject) -> JSONObject>(
 
         // convert and then return a json object with the log info and the file bytes converted to base 64
         val outJson = JSONObject()
-        log.forEach { (path, file) -> outJson.put(path, Base64.getEncoder().encodeToString(file.readBytes())) }
+        log.forEach { (path, hash) -> outJson.put(path, hash) }
         outJson
     },
 
