@@ -2,6 +2,7 @@ package daylightnebula.daylinmicroservices.filesystem
 
 import daylightnebula.daylinmicroservices.Microservice
 import daylightnebula.daylinmicroservices.MicroserviceConfig
+import daylightnebula.daylinmicroservices.requests.requestByName
 import org.json.JSONObject
 
 lateinit var service: Microservice

@@ -2,6 +2,7 @@ package daylightnebula.daylinmicroservices.cli
 
 import daylightnebula.daylinmicroservices.Microservice
 import daylightnebula.daylinmicroservices.MicroserviceConfig
+import daylightnebula.daylinmicroservices.requests.requestByName
 import org.json.JSONObject
 import java.lang.StringBuilder
 import java.lang.Thread.sleep
@@ -51,7 +52,7 @@ fun runCommand() {
             }
 
             // send request
-            service.request(
+            service.requestByName(
                 tokens[1],
                 tokens[2],
                 json
@@ -66,7 +67,7 @@ fun runCommand() {
             }
 
             // make sure target is valid
-            val targetService = service.getService(tokens[1])
+            val targetService = service.getServiceWithName(tokens[1])?.value
             if (targetService == null) {
                 println("No service could be identified with ${tokens[1]}")
                 return
@@ -77,7 +78,7 @@ fun runCommand() {
             println("Address: ${targetService.address}")
             println("Port: ${targetService.port}")
         }
-        "services" -> println("Current services: ${service.getServices().map { it.service }}")
+        "services" -> println("Current services: ${service.getServices().map { it.value.service }}")
         "stop" -> running = false
         else -> println("Invalid/unknown command \"$command\"")
     }

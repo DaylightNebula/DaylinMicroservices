@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices
+package daylightnebula.daylinmicroservices.requests
 
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
@@ -12,7 +12,6 @@ import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 
 internal object Requester {
-
     fun rawRequest(logger: Logger, address: String, json: JSONObject): CompletableFuture<JSONObject> {
         val future = CompletableFuture<JSONObject>()
 
@@ -22,9 +21,6 @@ internal object Requester {
                 // send get request with timeout, if any error occurs, just return null
                 val response = try {
                     HttpClient(CIO) {
-//                        install(Logging) {
-//                            level = LogLevel.INFO
-//                        }
                         install(HttpTimeout) {
                             requestTimeoutMillis = 3000
                         }
@@ -40,22 +36,4 @@ internal object Requester {
 
         return future
     }
-
-//    fun rawRequest(logger: KLogger, address: String, json: JSONObject, onComplete: (json: JSONObject?) -> Unit = {}) {
-//        // make a get request to the address
-//        rawGet(
-//            // just pass raw address and logger
-//            address = address,
-//            logger = logger,
-//            // pass json as a parameter in the request
-//            builder = {
-//                parameter("json", json.toString(1))
-//            },
-//            // when request completes, attempt to convert it to a json object and call the callback
-//            onComplete = {
-//                val outJson = try { JSONObject(it) } catch (ex: Exception) { null }
-//                onComplete(outJson)
-//            }
-//        )
-//    }
 }

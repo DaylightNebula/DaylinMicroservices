@@ -4,6 +4,7 @@ import com.orbitz.consul.Consul
 import com.orbitz.consul.model.agent.ImmutableRegCheck
 import com.orbitz.consul.model.agent.ImmutableRegistration
 import com.orbitz.consul.model.health.Service
+import daylightnebula.daylinmicroservices.requests.Requester
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
@@ -16,7 +17,7 @@ import java.util.concurrent.CompletableFuture
 import kotlin.collections.HashMap
 
 class Microservice(
-    private val config: MicroserviceConfig,
+    internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, (json: JSONObject) -> JSONObject>,
 
     // callbacks for when a service starts and closes
@@ -89,53 +90,6 @@ class Microservice(
     fun getServices(): Map<UUID, Service> { return serviceCache }
     fun getServicesWithName(name: String): Map<UUID, Service> { return serviceCache.filter { it.value.service == name } }
     fun getServicesWithTag(tag: String): Map<UUID, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
-
-    // make request to services
-    fun request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<JSONObject> {
-        json.put("broadcast", false)
-        val address = "http://${service.address}:${service.port}/$endpoint"
-        return Requester.rawRequest(config.logger, address, json)
-    }
-    fun requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
-        val service = getService(uuid) ?: return null
-        return request(service, endpoint, json)
-    }
-    fun requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
-        val serviceEntry = getServiceWithName(name) ?: return null
-        return request(serviceEntry.value, endpoint, json)
-    }
-    fun requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
-        val serviceEntry = getServiceWithTag(tag) ?: return null
-        return request(serviceEntry.value, endpoint, json)
-    }
-
-    // broadcast to services
-    fun broadcastRequestByName(name: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
-        json.put("broadcast", true)
-        return getServicesWithName(name).map { entry -> request(entry.value, endpoint, json) }
-    }
-    fun broadcastRequestByTag(tag: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
-        json.put("broadcast", true)
-        return getServicesWithTag(tag).map { entry -> request(entry.value, endpoint, json) }
-    }
-
-    // function that creates service join packet
-    private lateinit var cachedJoinPacket: JSONObject
-    private fun getJoinPacket(): JSONObject {
-        if (!this::cachedJoinPacket.isInitialized)
-            cachedJoinPacket = (endpoints["info"]?.let { it(JSONObject()) } ?: JSONObject())
-                .put("status", "join")
-                .put("port", config.port)
-        return cachedJoinPacket
-    }
-
-    // function that creates service close packet
-    private lateinit var cachedClosePacket: JSONObject
-    private fun getClosePacket(): JSONObject {
-        if (!this::cachedClosePacket.isInitialized)
-            cachedClosePacket = (endpoints["info"]?.let { it(JSONObject()) } ?: JSONObject()).put("status", "close")
-        return cachedClosePacket
-    }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
