@@ -26,7 +26,8 @@ fun main(args: Array<String>) {
     service.requestByName(name, "log", JSONObject())
         ?.whenComplete { json, _ -> FileSystemFiles.updateLog(json) }
 
-    FileSystemFiles.trigger()
+    // load the file system so that its loaded when necessary (Kotlin weirdness)
+    FileSystemFiles.triggerStart()
 
     // start while loop to keep everything alive
     while (true) {}

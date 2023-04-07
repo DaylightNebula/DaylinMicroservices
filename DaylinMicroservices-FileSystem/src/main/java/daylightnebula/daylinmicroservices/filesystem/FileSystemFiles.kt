@@ -12,12 +12,10 @@ object FileSystemFiles {
     private val cacheLogFile = File("filelog.json").makeSureExists(false, defaultText = "{}")
     private val cacheTree = loadTree(cacheDirectory)
 
-    init {
-        printTree("", cacheTree)
-    }
+    // a function that triggers the creation of this object
+    fun triggerStart() { println("Trigger") }
 
-    fun trigger() { println("Trigger") }
-
+    // function that prints the entire file tree
     private fun printTree(path: String, element: LogTreeElement, tabs: Int = 0) {
         for (i in 0 until tabs) print("  ")
         print("- ")

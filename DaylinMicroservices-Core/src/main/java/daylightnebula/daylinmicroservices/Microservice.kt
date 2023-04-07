@@ -92,7 +92,7 @@ class Microservice(
 
     // make request to services
     fun request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<JSONObject> {
-        json.put("broadcasted", false)
+        json.put("broadcast", false)
         val address = "http://${service.address}:${service.port}/$endpoint"
         return Requester.rawRequest(config.logger, address, json)
     }
@@ -111,11 +111,11 @@ class Microservice(
 
     // broadcast to services
     fun broadcastRequestByName(name: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
-        json.put("broadcasted", true)
+        json.put("broadcast", true)
         return getServicesWithName(name).map { entry -> request(entry.value, endpoint, json) }
     }
     fun broadcastRequestByTag(tag: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
-        json.put("broadcasted", true)
+        json.put("broadcast", true)
         return getServicesWithTag(tag).map { entry -> request(entry.value, endpoint, json) }
     }
 

@@ -1,5 +1,5 @@
 ===== Version 0.2 =====
-- [ ] File System Service
+- [x] File System Service
   - Purpose:
     - Some services may need persistently stored files that ARE NOT configs.
     - This is would be a method of storing them that has redundancy and can be quickly referenced.
@@ -7,24 +7,24 @@
     - This log should contain hashes of ALL files (but not directories)
   - Tags: "file_system"
   - Endpoints: ("-" means the backbone is ready but no endpoint is created yet)
-    - [-] list <path>
+    - [x] list <path>
       - Lists all files at the given path with the given sorting
-    - [-] get <path>
+    - [x] get <path>
       - Returns a file of the given path (the directory or the file)
       - If the file does not exist, return a error
-    - [-] push <path> <file>
+    - [x] push <path> <file>
       - Puts the given file at the given path
       - Logs the change
       - Populates to other file systems (if json is not marked broadcasted)
-    - [-] delete <path>
+    - [x] delete <path>
       - Deletes the given path
       - Logs the change
       - Populates to other files systems (if json is not marked broadcasted)
       - If the file does not exist, return an error
-    - [-] change log <since unix time stamp> [path = root path]
+    - [x] change_log <since unix time stamp>
       - Returns the log since the given time
       - If a path is given, only return changes in that path
-    - [-] hash <path>
+    - [x] hash <path>
       - Returns the hash at the path
       - If directory, returns a list of files and their hashes in the path
 - [ ] Other changes
