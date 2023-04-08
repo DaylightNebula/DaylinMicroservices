@@ -27,8 +27,10 @@
     - [x] hash <path>
       - Returns the hash at the path
       - If directory, returns a list of files and their hashes in the path
-- [x] Other changes
+- [ ] Other changes
   - [x] Change ids to use UUIDs
+  - [ ] Remove dependence on docker
+  - [ ] Automatically find health check url
   - [x] Allow to reference other services by tag in request (optionally self, default false)
   - [x] Broadcast to all services with a given name or tag (optionally self, default false)
     - Mark json objects has broadcasted
