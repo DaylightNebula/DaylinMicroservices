@@ -1,5 +1,5 @@
 ===== Version 0.2 =====
-- [ ] File System Service
+- [x] File System Service
   - Purpose:
     - Some services may need persistently stored files that ARE NOT configs.
     - This is would be a method of storing them that has redundancy and can be quickly referenced.
@@ -27,11 +27,8 @@
     - [x] hash <path>
       - Returns the hash at the path
       - If directory, returns a list of files and their hashes in the path
-  - Other functions
-    - [ ] Update via other systems change logs
-- [ ] Other changes
+- [x] Other changes
   - [x] Change ids to use UUIDs
-  - [ ] Make sure services will work in docker containers with Consul
   - [x] Allow to reference other services by tag in request (optionally self, default false)
   - [x] Broadcast to all services with a given name or tag (optionally self, default false)
     - Mark json objects has broadcasted
@@ -47,4 +44,3 @@
       - Returns true if a file exists on the file system
     - [x] List path <path>
       - Returns the list of files at the given path
-  - [ ] Update CLI Interface with file system interface

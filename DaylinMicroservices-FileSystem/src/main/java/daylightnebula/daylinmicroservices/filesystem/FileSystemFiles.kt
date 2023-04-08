@@ -215,6 +215,7 @@ object FileSystemFiles {
 
     // load and save log functions
     fun updateLog(json: JSONObject) {}
+
     private fun saveLog() = cacheLogFile.writeText(
         cacheTree
             .convertToJson()

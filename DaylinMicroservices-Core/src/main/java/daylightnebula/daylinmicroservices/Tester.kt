@@ -7,7 +7,7 @@ val service = Microservice(
     "tester",
     listOf()
 ), endpoints = hashMapOf())
-fun main() {
+fun main(args: Array<String>) {
     service.start()
 
     sleep(10000)
