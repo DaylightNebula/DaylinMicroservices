@@ -12,6 +12,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import kotlin.collections.HashMap
@@ -59,7 +60,7 @@ class Microservice(
 
         // setup health check
         val check = ImmutableRegCheck.builder()
-            .http(config.consulRefUrl)
+            .http("http://${InetAddress.getLocalHost().hostAddress}:${config.port}/")
             .interval("10s")
             .timeout("1s")
             .deregisterCriticalServiceAfter("1s")

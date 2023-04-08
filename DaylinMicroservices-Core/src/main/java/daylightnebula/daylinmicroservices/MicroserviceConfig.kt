@@ -1,13 +1,16 @@
 package daylightnebula.daylinmicroservices
 
 import mu.KotlinLogging
-import org.apache.commons.lang3.SystemUtils
 import org.json.JSONObject
 import org.slf4j.Logger
+import java.io.BufferedReader
 import java.io.File
-import java.lang.IllegalArgumentException
+import java.io.InputStreamReader
+import java.net.InetAddress
 import java.net.ServerSocket
+import java.net.URL
 import java.util.*
+
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
@@ -73,7 +76,12 @@ data class MicroserviceConfig(
         // make sure consul ref url is blank
         if (consulRefUrl.isNotBlank()) return
 
+        // get my ip
+        val whatismyip = URL("http://checkip.amazonaws.com")
+        val `in` = BufferedReader(InputStreamReader(whatismyip.openStream()))
+        val ip = `in`.readLine()
+
         // set consul ref url
-        consulRefUrl = if (SystemUtils.IS_OS_LINUX) "http://localhost:$port/" else "http://host.docker.internal:$port/"
+        consulRefUrl = "http://$ip:${port}/"
     }
 }

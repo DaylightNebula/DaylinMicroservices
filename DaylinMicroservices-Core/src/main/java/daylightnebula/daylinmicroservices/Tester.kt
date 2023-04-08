@@ -10,6 +10,7 @@ val service = Microservice(
 fun main(args: Array<String>) {
     service.start()
 
-    sleep(10000)
-    service.dispose()
+    while(true) {}
+//    sleep(10000)
+//    service.dispose()
 }
