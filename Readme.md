@@ -1,7 +1,7 @@
 # Daylin Microservices
 This is a simple backbone for kotlin based microservices.  
 This uses consul for discovery, so you will need that to be setup to use this.  
-You can use the run-consul-docker shell or batch files to quickly create and set up a docker with consul for testing.
+You can use the run-consul shell or batch files to quickly create and set up consul for testing.
 
 ## Creating a Microservice
 Microservices can quickly be created using just a microservice config (described below) and a hashmap of endpoints (also described below).  All they will do is connect consul and then respond to those endpoints until their dispose function is called or the application is shutdown.  Microservices do not keep their program alive by themselves and will shutdown if the main thread stops.
