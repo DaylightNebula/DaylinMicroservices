@@ -1,5 +1,5 @@
 # Daylin Microservices
-[![](https://jitpack.io/v/DaylightNebula/DaylinMicroservices.svg)](https://jitpack.io/#DaylightNebula/DaylinMicroservices)
+[![](https://jitpack.io/v/DaylightNebula/DaylinMicroservices.svg)](https://jitpack.io/#DaylightNebula/DaylinMicroservices) \
 This is a simple backbone for kotlin based microservices.  
 This uses consul for discovery, so you will need that to be setup to use this.  
 You can use the run-consul shell or batch files to quickly create and set up consul for testing.
