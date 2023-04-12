@@ -4,6 +4,24 @@ This is a simple backbone for kotlin based microservices.
 This uses consul for discovery, so you will need that to be setup to use this.  
 You can use the run-consul shell or batch files to quickly create and set up consul for testing.
 
+## Including in a Project
+Add jitpack to your repositories list.
+```kotlin
+repositories {
+  maven("https://jitpack.io/")
+}
+```
+
+Then add this to your dependencies list.  
+```kotlin
+dependencies {
+  implementation("com.github.DaylightNebula.DaylinMicroservices:DaylinMicroservices-Core:0.2.1")
+  // 0.2.1 may need to be changed to the lastest version in case I forgot to update this readme file.
+  // you can also use master-SNAPSHOT as the version if you are feeling brave. 
+  // However, I use master as my development branch so use at your own risk.
+}
+```
+
 ## Creating a Microservice
 Microservices can quickly be created using just a microservice config (described below) and a hashmap of endpoints (also described below).  All they will do is connect consul and then respond to those endpoints until their dispose function is called or the application is shutdown.  Microservices do not keep their program alive by themselves and will shutdown if the main thread stops.
 
