@@ -1,6 +1,6 @@
 allprojects {
     version = "0.2"
-    group = 'daylightnebula.daylinmicroservices'
+    group = 'com.github.daylightnebula'
 }
 
 subprojects {
