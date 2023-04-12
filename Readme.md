@@ -4,7 +4,7 @@ This uses consul for discovery, so you will need that to be setup to use this.
 You can use the run-consul-docker shell or batch files to quickly create and set up a docker with consul for testing.
 
 ## Creating a Microservice
-Microservices can quickly be created using just a microservice config (described below) and a hashmap of endpoints (also described below).  All they will do is connect consul and then respond to those endpoints until their dispose function is called or the application is shutdown.  YOU MUST HAVE SOME KIND OF LOOP TO KEEP THE PROGRAM ALIVE IN YOUR MAIN THREAD, THESE SERVICES DO NOT KEEP THEMSELVES ALIVE.
+Microservices can quickly be created using just a microservice config (described below) and a hashmap of endpoints (also described below).  All they will do is connect consul and then respond to those endpoints until their dispose function is called or the application is shutdown.  Microservices do not keep their program alive by themselves and will shutdown if the main thread stops.
 
 Here is an example of a service that once started will simple return a json object with hello set to true if its hello endpoint is called:
 ```kotlin
