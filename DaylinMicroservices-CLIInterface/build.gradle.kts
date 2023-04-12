@@ -3,9 +3,6 @@ plugins {
     id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
-group = "daylightnebula.daylinmicroservices.cli"
-version = "0.1"
-
 repositories {
     mavenCentral()
 }
