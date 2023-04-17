@@ -7,8 +7,8 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    sourceCompatibility = 19
+    targetCompatibility = 19
 
     java {
         withSourcesJar()
