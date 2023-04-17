@@ -22,7 +22,8 @@ dependencies {
 
 tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-        archiveBaseName.set("FileSystemService")
+//        archiveBaseName.set("FileSystemService")
+        archiveFileName.set(name.toLowerCase())
 //        mergeServiceFiles()
         manifest {
             attributes(mapOf("Main-Class" to "daylightnebula.daylinmicroservices.filesystem.FileSystemService"))
