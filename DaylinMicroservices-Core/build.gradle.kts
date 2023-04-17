@@ -38,5 +38,4 @@ tasks.jar {
         from(zipTree(file.absoluteFile))
     }
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    archiveFileName.set(archiveFileName.get().toLowerCase())
 }
