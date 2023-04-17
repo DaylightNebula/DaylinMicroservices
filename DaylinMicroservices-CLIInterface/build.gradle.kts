@@ -21,7 +21,7 @@ dependencies {
 }
 tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
-//        archiveBaseName.set("CLIInterface")
+        archiveFileName.set("DaylinMicroservices-CLIInterface.jar")
 //        mergeServiceFiles()
         manifest {
             attributes(mapOf("Main-Class" to "daylightnebula.daylinmicroservices.cli.CLIInterfaceKt"))

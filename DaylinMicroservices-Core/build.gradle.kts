@@ -38,4 +38,5 @@ tasks.jar {
         from(zipTree(file.absoluteFile))
     }
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    archiveFileName.set("DaylinMicroservices-Core.jar")
 }
