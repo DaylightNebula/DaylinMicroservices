@@ -28,7 +28,6 @@ class Microservice(
 ): Thread() {
 
     // server stuff
-    val uuid = UUID.randomUUID()
     private lateinit var server: NettyApplicationEngine
     private lateinit var consul: Consul
 
@@ -72,7 +71,7 @@ class Microservice(
         consul = Consul.builder().withUrl(config.consulUrl).build()
         consul.agentClient().register(
             ImmutableRegistration.builder()
-                .id(uuid.toString())
+                .id(config.id)
                 .tags(config.tags)
                 .name(config.name)
                 .address("localhost")
@@ -143,7 +142,7 @@ class Microservice(
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
         serviceCacheThread.dispose()
-        consul.agentClient().deregister(config.id.toString())
+        consul.agentClient().deregister(config.id)
         server.stop(1000, 1000)
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")
         super.join()
