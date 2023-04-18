@@ -30,4 +30,4 @@
 - [ ] Implement multiplatform
 - [ ] Replace dependencies that are not multiplatform
 - [ ] Convert from JSON lib to kotlin serialization
-- [ ] Simplify creation of docker containers in build
+- [ ] Simplify creation of docker image in build
