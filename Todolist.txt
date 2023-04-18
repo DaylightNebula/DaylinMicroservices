@@ -1,9 +1,17 @@
-===== Version 0.3 =====
+===== Version 0.3 (Consitenct and Ease of Use) =====
 - [x] Extension functions for list of completable futures that when the first returns not null, a callback is called
 - [x] Add better docker container for connection detection
 - [x] Finalize removal of file system
 - [x] Switch to specified IDs instead of random IDs (works better with Consul)
+- [ ] Fix inconsistencies in request and responses
+    - [ ] Schemas
+        - [ ] Each schema is a list of names and types
+    - [ ] Endpoint Result Objects
+        - [ ] Error result
+        - [ ] Ok result that MUST match scheme
+            - [ ] If fail, switch to error result
 - [ ] UI Interface
+    - [ ] Consul URL option if nothing is found on normal URL
     - [ ] Sidebar
         - [ ] Home button
         - [ ] List of all services
@@ -17,3 +25,9 @@
                 - [ ] When one is clicked, open menu
                     - [ ] Info of endpoint
                     - [ ] Scrollable list of data
+
+===== Version 0.4 (Versatility) =====
+- [ ] Implement multiplatform
+- [ ] Replace dependencies that are not multiplatform
+- [ ] Convert from JSON lib to kotlin serialization
+- [ ] Simplify creation of docker containers in build
