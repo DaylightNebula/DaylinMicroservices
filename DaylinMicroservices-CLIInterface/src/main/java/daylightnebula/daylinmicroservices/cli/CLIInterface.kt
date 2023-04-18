@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.lang.StringBuilder
 import java.lang.Thread.sleep
 
-val service = Microservice(MicroserviceConfig("cli-interface", tags = listOf("cli")), endpoints = hashMapOf())
+val service = Microservice(MicroserviceConfig("cli-interface", "cli-interface", tags = listOf("cli")), endpoints = hashMapOf())
 var running = true
 
 fun main() {

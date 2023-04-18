@@ -143,9 +143,9 @@ class Microservice(
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
         serviceCacheThread.dispose()
-        consul.agentClient().deregister(config.uuid.toString())
+        consul.agentClient().deregister(config.id.toString())
         server.stop(1000, 1000)
-        config.logger.info("Shutdown ${config.uuid}, hidden = $hidden")
+        config.logger.info("Shutdown ${config.id}, hidden = $hidden")
         super.join()
     }
 }

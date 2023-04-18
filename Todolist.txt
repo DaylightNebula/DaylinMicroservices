@@ -1,8 +1,8 @@
 ===== Version 0.3 =====
-- [ ] Extension functions for list of completable futures that when the first returns not null, a callback is called
-- [ ] Add better docker container for connection detection
-- [ ] Finalize removal of file system
-- [ ] Switch to specified IDs instead of random IDs (works better with Consul)
+- [x] Extension functions for list of completable futures that when the first returns not null, a callback is called
+- [x] Add better docker container for connection detection
+- [x] Finalize removal of file system
+- [x] Switch to specified IDs instead of random IDs (works better with Consul)
 - [ ] UI Interface
     - [ ] Sidebar
         - [ ] Home button
