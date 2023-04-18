@@ -51,6 +51,7 @@ object FileSystemFiles {
             if (nextRoot == null) {
                 val file = File(cacheDirectory, path)
                 nextRoot = LogEntryDirectory(file, hashMapOf())
+                println("Created log entry at $cacheDirectory $path")
                 didChange = true
             }
             
@@ -59,7 +60,7 @@ object FileSystemFiles {
         }
 
         // get path and hash for the file
-        path += pathElements.last()
+        path += "/" + pathElements.last()
         val hash = HashUtils.getChecksumFromBytes(MessageDigest.getInstance("MD5"), bytes)
 
         // check if file already exists in root
@@ -69,6 +70,7 @@ object FileSystemFiles {
         if (preExistingFile == null || preExistingFile.hash != hash) {
             // get the target file and write the file to it
             val file = File(cacheDirectory, path)
+            file.parentFile.mkdirs()
             file.writeBytes(bytes)
 
             // save the change
@@ -99,7 +101,7 @@ object FileSystemFiles {
         }
 
         // get the final file, return null if it does not exist
-        path += pathElements.last()
+        path += "/" + pathElements.last()
         val file = root.children[path]?.file ?: return null
 
         // if the file does not exist, remove the file from the log and save the change, then return nothing
@@ -131,7 +133,7 @@ object FileSystemFiles {
         }
 
         // try to get the file
-        path += pathElements.last()
+        path += "/" + pathElements.last()
         val entry = root.children[path] ?: return false
 
         // if the file does not exist, return false
@@ -169,7 +171,7 @@ object FileSystemFiles {
         }
 
         // try to get the file and then return the hash
-        path += pathElements.last()
+        path += "/" + pathElements.last()
         return (root.children[path] as? LogEntry)?.hash ?: return null
     }
     fun getFileListAtPath(path: String): List<String>? {
@@ -191,7 +193,7 @@ object FileSystemFiles {
         }
 
         // try to get the file
-        path += pathElements.last()
+        path += "/" + pathElements.last()
         val entry = root.children[path] ?: return null
 
         // return the name and extensions of the entries children

@@ -1,6 +1,7 @@
 package daylightnebula.daylinmicroservices.filesysteminterface
 
 import daylightnebula.daylinmicroservices.Microservice
+import daylightnebula.daylinmicroservices.requests.broadcastRequestByTag
 import daylightnebula.daylinmicroservices.requests.requestByTag
 import org.json.JSONObject
 import java.io.File
@@ -75,7 +76,7 @@ fun Microservice.pushFileBytes(path: String, bytes: ByteArray): CompletableFutur
         if (json.has("error")) this.config.logger.warn("File system push request for path $path returned with error ${json.getString("error")}")
 
         // complete the future with the success state
-        future.complete(json.optBoolean("success", false))
+        future.complete(json.optBoolean("success", !json.has("error")))
     } ?: future.complete(false)
 
     return future

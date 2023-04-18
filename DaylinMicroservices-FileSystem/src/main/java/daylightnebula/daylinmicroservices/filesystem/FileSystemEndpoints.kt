@@ -57,6 +57,7 @@ val endpoints = hashMapOf<String, (json: JSONObject) -> JSONObject>(
         var error = ""
 
         // get file info
+        println("Received push request ${json.toString(4)}")
         val path = json.optString("path")
         val base64string = json.optString("bytes")
         val bytes = if (base64string != null) {

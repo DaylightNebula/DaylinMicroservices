@@ -3,6 +3,7 @@ package daylightnebula.daylinmicroservices
 import com.orbitz.consul.Consul
 import com.orbitz.consul.model.agent.ImmutableRegCheck
 import com.orbitz.consul.model.agent.ImmutableRegistration
+import com.orbitz.consul.model.agent.Registration.RegCheck
 import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.requests.Requester
 import io.ktor.server.application.*
@@ -61,9 +62,10 @@ class Microservice(
         // setup health check
         val check = ImmutableRegCheck.builder()
             .http("http://${InetAddress.getLocalHost().hostAddress}:${config.port}/")
-            .interval("10s")
-            .timeout("1s")
-            .deregisterCriticalServiceAfter("1s")
+            .interval("1s")
+//            .timeout("1s")
+            .deregisterCriticalServiceAfter("100ms")
+//            .deregisterCriticalServiceAfter("1s")
             .build()
 
         // setup consul
@@ -75,7 +77,7 @@ class Microservice(
                 .name(config.name)
                 .address("localhost")
                 .port(config.port)
-                .check(check)
+                .addChecks(check)
                 .build()
         )
 
