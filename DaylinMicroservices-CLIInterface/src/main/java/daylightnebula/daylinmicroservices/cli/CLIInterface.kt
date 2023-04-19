@@ -56,8 +56,9 @@ fun runCommand() {
                 tokens[1],
                 tokens[2],
                 json
-            )?.whenComplete { json, _ ->
-                println("Response ${json.toString(4)}")
+            )?.whenComplete { result, _ ->
+                if (result.isError()) println("Request returned error: ${result.getError()}")
+                else println("Response ${result.getResult().toString(4)}")
             } ?: println("No service named ${tokens[1]}")
         }
         "info" -> {

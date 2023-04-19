@@ -2,49 +2,53 @@ package daylightnebula.daylinmicroservices.requests
 
 import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.Microservice
+import daylightnebula.daylinmicroservices.endpoints.EndpointResult
 import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 // make request to services
-fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<JSONObject> {
+fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult> {
     json.put("broadcast", false)
     val address = "http://${service.address}:${service.port}/$endpoint"
-    return Requester.rawRequest(this.config.logger, address, json).completeOnTimeout(JSONObject(), 1, TimeUnit.SECONDS)
+    return Requester.rawRequest(this.config.logger, address, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
-fun Microservice.requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+fun Microservice.requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
     val service = getService(uuid) ?: return null
-    return request(service, endpoint, json).completeOnTimeout(JSONObject(), 1, TimeUnit.SECONDS)
+    return request(service, endpoint, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
-fun Microservice.requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+fun Microservice.requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
     val serviceEntry = getServiceWithName(name) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(JSONObject(), 1, TimeUnit.SECONDS)
+    return request(serviceEntry.value, endpoint, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
-fun Microservice.requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<JSONObject>? {
+fun Microservice.requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
     val serviceEntry = getServiceWithTag(tag) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(JSONObject(), 1, TimeUnit.SECONDS)
+    return request(serviceEntry.value, endpoint, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
 
 // broadcast to services
-fun Microservice.broadcastRequestByName(name: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
+fun Microservice.broadcastRequestByName(name: String, endpoint: String, json: JSONObject): List<CompletableFuture<EndpointResult>> {
     json.put("broadcast", true)
     return getServicesWithName(name).map { entry -> request(entry.value, endpoint, json) }
 }
-fun Microservice.broadcastRequestByTag(tag: String, endpoint: String, json: JSONObject): List<CompletableFuture<JSONObject>> {
+fun Microservice.broadcastRequestByTag(tag: String, endpoint: String, json: JSONObject): List<CompletableFuture<EndpointResult>> {
     json.put("broadcast", true)
     return getServicesWithTag(tag).map { entry -> request(entry.value, endpoint, json) }
 }
 
 // when one of the futures completes, all the others will be cancelled and then the callback is called
-fun List<CompletableFuture<JSONObject>>.firstSuccessfulComplete(callback: (json: JSONObject) -> Unit) {
+fun List<CompletableFuture<EndpointResult>>.firstSuccessfulComplete(callback: (json: EndpointResult) -> Unit) {
     this.forEach { future ->
-        future.whenComplete { json, _ ->
-            if (json.has(".cancel")) return@whenComplete
+        future.whenComplete { result, _ ->
+            // if error, cancel
+            if (result.isError()) return@whenComplete
 
-            this.forEach { it.complete(JSONObject().put(".cancel", true)) }
+            // complete all other futures with an error
+            this.forEach { it.complete(EndpointResult("Cancelled by firstSuccessfulComplete")) }
 
-            callback(json)
+            // call callback
+            callback(result)
         }
     }
 }

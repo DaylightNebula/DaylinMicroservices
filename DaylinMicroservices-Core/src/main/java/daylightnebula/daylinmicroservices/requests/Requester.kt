@@ -1,5 +1,6 @@
 package daylightnebula.daylinmicroservices.requests
 
+import daylightnebula.daylinmicroservices.endpoints.EndpointResult
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
@@ -12,8 +13,8 @@ import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 
 internal object Requester {
-    fun rawRequest(logger: Logger, address: String, json: JSONObject): CompletableFuture<JSONObject> {
-        val future = CompletableFuture<JSONObject>()
+    fun rawRequest(logger: Logger, address: String, json: JSONObject): CompletableFuture<EndpointResult> {
+        val future = CompletableFuture<EndpointResult>()
 
         // start a thread to run the request async
         thread {
@@ -30,7 +31,7 @@ internal object Requester {
                 } catch (ex: Exception) { logger.warn("Request failed with exception: ${ex.message}"); null }
 
                 // when request completes, call the on complete function
-                future.complete(JSONObject(response?.bodyAsText() ?: "{}"))
+                future.complete(EndpointResult(JSONObject(response?.bodyAsText() ?: "{}")))
             }
         }
 

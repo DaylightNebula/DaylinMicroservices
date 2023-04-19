@@ -3,13 +3,10 @@
 - [x] Add better docker container for connection detection
 - [x] Finalize removal of file system
 - [x] Switch to specified IDs instead of random IDs (works better with Consul)
-- [ ] Fix inconsistencies in request and responses
-    - [ ] Schemas
-        - [ ] Each schema is a list of names and types
-    - [ ] Endpoint Result Objects
-        - [ ] Error result
-        - [ ] Ok result that MUST match scheme
-            - [ ] If fail, switch to error result
+- [x] Fix inconsistencies in request and responses
+    - [x] Endpoint Result Objects
+        - [x] Error result
+        - [x] Ok result
 - [ ] UI Interface
     - [ ] Consul URL option if nothing is found on normal URL
     - [ ] Sidebar
@@ -18,13 +15,15 @@
         - [ ] When one is clicked, open it in the center panel
     - [ ] Center panel
         - [ ] Home panel
-            - [ ] List of services and their up state
+            - [ ] List of active services
             - [ ] Each one opens center panel for the service
         - [ ] Center panel
             - [ ] List of endpoints
                 - [ ] When one is clicked, open menu
                     - [ ] Info of endpoint
-                    - [ ] Scrollable list of data
+                    - [ ] Scrollable list of key value pairs that will be turned into a json object and sent with the request
+                    - [ ] List of previous calls
+                        - [ ] When clicked, fill in above list
 
 ===== Version 0.4 (Versatility) =====
 - [ ] Implement multiplatform
