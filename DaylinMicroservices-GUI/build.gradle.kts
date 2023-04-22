@@ -23,6 +23,7 @@ dependencies {
 
     // compose
     implementation(compose.desktop.currentOs)
+    implementation("br.com.devsrsouza.compose.icons:octicons:1.1.0")
 }
 tasks {
     named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {

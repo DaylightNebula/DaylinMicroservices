@@ -14,7 +14,7 @@ fun Microservice.request(service: Service, endpoint: String, json: JSONObject): 
     val address = "http://${service.address}:${service.port}/$endpoint"
     return Requester.rawRequest(this.config.logger, address, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
-fun Microservice.requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
+fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
     val service = getService(uuid) ?: return null
     return request(service, endpoint, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }

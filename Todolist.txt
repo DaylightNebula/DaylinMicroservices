@@ -1,4 +1,4 @@
-===== Version 0.3 (Consitenct and Ease of Use) =====
+===== Version 0.3 =====
 - [x] Extension functions for list of completable futures that when the first returns not null, a callback is called
 - [x] Add better docker container for connection detection
 - [x] Finalize removal of file system
@@ -24,9 +24,5 @@
                     - [ ] Scrollable list of key value pairs that will be turned into a json object and sent with the request
                     - [ ] List of previous calls
                         - [ ] When clicked, fill in above list
-
-===== Version 0.4 (Versatility) =====
-- [ ] Implement multiplatform
-- [ ] Replace dependencies that are not multiplatform
-- [ ] Convert from JSON lib to kotlin serialization
-- [ ] Simplify creation of docker image in build
+- [ ] Kubernetes
+- [ ] Auto docker images

@@ -15,7 +15,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.net.InetAddress
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import kotlin.collections.HashMap
 
 class Microservice(
@@ -32,10 +31,10 @@ class Microservice(
     private lateinit var consul: Consul
 
     // service cache
-    private var serviceCache = mutableMapOf<UUID, Service>()
+    private var serviceCache = mutableMapOf<String, Service>()
     private val serviceCacheThread = loopingThread(1000) {
         if (!this::consul.isInitialized) return@loopingThread
-        val curServices = consul.agentClient().services.mapKeys { UUID.fromString(it.key) }
+        val curServices = consul.agentClient().services
 
         // check for any new services (anything in new service list that isn't in the cache)
         val newServices = curServices.filter { !serviceCache.contains(it.key) }
@@ -86,12 +85,12 @@ class Microservice(
     }
 
     // get service functions
-    fun getService(uuid: UUID): Service? { return serviceCache[uuid] }
-    fun getServiceWithName(name: String): Map.Entry<UUID, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
-    fun getServiceWithTag(tag: String): Map.Entry<UUID, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
-    fun getServices(): Map<UUID, Service> { return serviceCache }
-    fun getServicesWithName(name: String): Map<UUID, Service> { return serviceCache.filter { it.value.service == name } }
-    fun getServicesWithTag(tag: String): Map<UUID, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
+    fun getService(uuid: String): Service? { return serviceCache[uuid] }
+    fun getServiceWithName(name: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
+    fun getServiceWithTag(tag: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
+    fun getServices(): Map<String, Service> { return serviceCache }
+    fun getServicesWithName(name: String): Map<String, Service> { return serviceCache.filter { it.value.service == name } }
+    fun getServicesWithTag(tag: String): Map<String, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
