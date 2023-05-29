@@ -47,6 +47,18 @@ val testDefaultObject3 = DynamicObject()
     .put("name", "Michelle")
     .put("age", "abc")
 
+val testOptionalSchema = Schema(
+    "name" to SchemaElement.String(),
+    "age" to SchemaElement.Optional(SchemaElement.Number())
+)
+
+val testOption1 = DynamicObject()
+    .put("name", "Bobby")
+
+val testOption2 = DynamicObject()
+    .put("name", "Joe")
+    .put("age", 30)
+
 class Tests {
     @Test
     fun testTrue() {
@@ -100,6 +112,28 @@ class Tests {
             val json = result.unwrap() as JsonObject
             if (json.containsKey("age"))
                 (json["age"]?.jsonPrimitive?.int ?: 0) == -1
+            else false
+        } else false
+    }
+
+    @Test
+    fun testOption1() = assertTrue {
+        val result = testOption1.validateToResult(testOptionalSchema)
+
+        if (result.isOk()) {
+            val json = result.unwrap() as JsonObject
+            (!json.containsKey("age"))
+        } else false
+    }
+
+    @Test
+    fun testOption2() = assertTrue {
+        val result = testOption2.validateToResult(testOptionalSchema)
+
+        if (result.isOk()) {
+            val json = result.unwrap() as JsonObject
+            if (json.containsKey("age"))
+                (json["age"]?.jsonPrimitive?.int ?: 0) == 30
             else false
         } else false
     }

@@ -21,6 +21,9 @@ sealed class SchemaElement(val isValid: (element: JsonElement) -> kotlin.Boolean
     class Default(val schema: SchemaElement, val default: JsonElement): SchemaElement({ true }) {
         constructor(schema: SchemaElement, default: Any): this(schema, anyToJson(schema, default).unwrapOrError("Given default did not match given schema!"))
     }
+
+    // optionals
+    class Optional(val schema: SchemaElement): SchemaElement({ true })
 }
 
 // class description of schema with a list of names and their corresponding schema elements
@@ -31,11 +34,22 @@ class Schema(val elements: HashMap<String, SchemaElement>) {
         // check if all schema elements are present in json and valid
         var output = true
         elements.forEach { (key, element) ->
-            // make sure json has the given key
-            if (!json.containsKey(key)) { output = false; return@forEach }
+            // check if element is not optional
+            if (element !is SchemaElement.Optional) {
+                // make sure json has the given key
+                if (!json.containsKey(key)) {
+                    output = false; return@forEach
+                }
 
-            // validate the json at the key
-            if (!element.isValid(json[key]!!)) output = false
+                // validate the json at the key
+                if (!element.isValid(json[key]!!)) output = false
+            }
+            // otherwise, validate optionally
+            else {
+                // if json contains key, validate it
+                if (json.containsKey(key) && !element.isValid(json[key]!!))
+                    output = false
+            }
         }
         return output
     }

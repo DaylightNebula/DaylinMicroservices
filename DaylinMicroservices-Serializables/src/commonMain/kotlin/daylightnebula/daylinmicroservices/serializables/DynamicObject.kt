@@ -48,62 +48,62 @@ class DynamicObject() {
 
 // convert any to json with the given check key
 @OptIn(ExperimentalEncodingApi::class)
-fun anyToJson(checkKey: SchemaElement, value: Any): Result {
-    return try {
-        when (checkKey) {
-            is SchemaElement.Array -> if (value is Array<*> && checkKey.size == value.size) Result.Ok(
-                JsonArray(
-                    value.map { subElement ->
-                        if (subElement == null) throw IllegalArgumentException("Elements of list cannot be null")
-                        val result = anyToJson(checkKey.subElementKey, subElement)
-                        if (result.isOk())
-                            result.unwrap()
-                        else throw IllegalArgumentException("Could not convert input to json array")
-                    })
-            ) else Result.Error("Invalid input array")
+fun anyToJson(checkKey: SchemaElement, value: Any): Result = try {
+    when (checkKey) {
+        is SchemaElement.Array -> if (value is Array<*> && checkKey.size == value.size) Result.Ok(
+            JsonArray(
+                value.map { subElement ->
+                    if (subElement == null) throw IllegalArgumentException("Elements of list cannot be null")
+                    val result = anyToJson(checkKey.subElementKey, subElement)
+                    if (result.isOk())
+                        result.unwrap()
+                    else throw IllegalArgumentException("Could not convert input to json array")
+                })
+        ) else Result.Error("Invalid input array")
 
-            is SchemaElement.Boolean -> if (value is Boolean) validate(
-                checkKey,
-                JsonPrimitive(value)
-            ) else Result.Error("Invalid input boolean")
+        is SchemaElement.Boolean -> if (value is Boolean) validate(
+            checkKey,
+            JsonPrimitive(value)
+        ) else Result.Error("Invalid input boolean")
 
-            is SchemaElement.Data -> if (value is ByteArray) validate(
-                checkKey,
-                JsonPrimitive(Base64.encode(value))
-            ) else Result.Error("Invalid byte array as data")
+        is SchemaElement.Data -> if (value is ByteArray) validate(
+            checkKey,
+            JsonPrimitive(Base64.encode(value))
+        ) else Result.Error("Invalid byte array as data")
 
-            is SchemaElement.List -> if (value is Collection<*>) Result.Ok(JsonArray(value.map { subElement ->
-                if (subElement == null) throw IllegalArgumentException("Elements of list cannot be null")
-                val result = anyToJson(checkKey.subElementKey, subElement)
-                if (result.isOk())
-                    result.unwrap()
-                else throw IllegalArgumentException("Could not convert input to json list")
-            })) else Result.Error("Invalid input list")
+        is SchemaElement.List -> if (value is Collection<*>) Result.Ok(JsonArray(value.map { subElement ->
+            if (subElement == null) throw IllegalArgumentException("Elements of list cannot be null")
+            val result = anyToJson(checkKey.subElementKey, subElement)
+            if (result.isOk())
+                result.unwrap()
+            else throw IllegalArgumentException("Could not convert input to json list")
+        })) else Result.Error("Invalid input list")
 
-            is SchemaElement.Number -> if (value is Number) validate(
-                checkKey,
-                JsonPrimitive(value)
-            ) else Result.Error("Invalid input number")
+        is SchemaElement.Number -> if (value is Number) validate(
+            checkKey,
+            JsonPrimitive(value)
+        ) else Result.Error("Invalid input number")
 
-            is SchemaElement.Object -> if (value is DynamicObject) {
-                // validate the object to a result
-                val result = value.validateToResult(checkKey.schema)
+        is SchemaElement.Object -> if (value is DynamicObject) {
+            // validate the object to a result
+            val result = value.validateToResult(checkKey.schema)
 
-                // if the object is ok
-                if (result.isOk()) Result.Ok(result.unwrap())
-                else result as Result.Error
-            } else Result.Error("Invalid input object")
+            // if the object is ok
+            if (result.isOk()) Result.Ok(result.unwrap())
+            else result as Result.Error
+        } else Result.Error("Invalid input object")
 
-            is SchemaElement.String -> if (value is String) validate(
-                checkKey,
-                JsonPrimitive(value)
-            ) else Result.Error("Invalid input string")
+        is SchemaElement.String -> if (value is String) validate(
+            checkKey,
+            JsonPrimitive(value)
+        ) else Result.Error("Invalid input string")
 
-            is SchemaElement.Default -> Result.Ok(anyToJson(checkKey.schema, value).unwrapOr(checkKey.default))
-        }
-    } catch (ex: IllegalArgumentException) {
-        Result.Error(ex.message ?: "Unknown error")
+        is SchemaElement.Default -> Result.Ok(anyToJson(checkKey.schema, value).unwrapOr(checkKey.default))
+
+        is SchemaElement.Optional -> anyToJson(checkKey.schema, value)
     }
+} catch (ex: IllegalArgumentException) {
+    Result.Error(ex.message ?: "Unknown error")
 }
 
 // validate if a check key matches a value
