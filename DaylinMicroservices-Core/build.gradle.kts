@@ -13,6 +13,7 @@ repositories {
 dependencies {
     // json
     implementation("org.json:json:20230227")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
     // ktor server
     implementation("io.ktor:ktor-server-core:2.2.4")

@@ -1,5 +1,6 @@
 package daylightnebula.daylinmicroservices
 
+import org.json.JSONObject
 import java.lang.Thread.sleep
 
 val service = Microservice(
@@ -8,7 +9,11 @@ val service = Microservice(
         "tester",
         listOf()
     ),
-    endpoints = hashMapOf()
+    endpoints = hashMapOf(
+        "test" to { json ->
+            JSONObject().put("test", true)
+        }
+    )
 )
 fun main(args: Array<String>) {
     service.start()
