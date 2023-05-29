@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices
+package daylightnebula.daylinmicroservices.core
 
 // a simple function that creates a thread that runs the loop every given amount of ms
 fun loopingThread(intervalMS: Int, callback: () -> Unit): LoopingThread {

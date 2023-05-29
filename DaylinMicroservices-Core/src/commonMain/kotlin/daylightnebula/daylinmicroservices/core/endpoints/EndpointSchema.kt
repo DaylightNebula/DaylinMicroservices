@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices.endpoints
+package daylightnebula.daylinmicroservices.core.endpoints
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*

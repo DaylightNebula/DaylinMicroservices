@@ -1,6 +1,6 @@
-package daylightnebula.daylinmicroservices.requests
+package daylightnebula.daylinmicroservices.core.requests
 
-import daylightnebula.daylinmicroservices.endpoints.EndpointResult
+import daylightnebula.daylinmicroservices.core.endpoints.EndpointResult
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*

@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices.endpoints
+package daylightnebula.daylinmicroservices.core.endpoints
 
 import org.json.JSONArray
 import org.json.JSONObject

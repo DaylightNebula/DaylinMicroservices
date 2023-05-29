@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices
+package daylightnebula.daylinmicroservices.core
 
 import mu.KotlinLogging
 import org.json.JSONObject

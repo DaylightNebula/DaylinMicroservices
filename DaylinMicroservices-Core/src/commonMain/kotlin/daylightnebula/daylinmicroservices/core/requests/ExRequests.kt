@@ -1,8 +1,8 @@
-package daylightnebula.daylinmicroservices.requests
+package daylightnebula.daylinmicroservices.core.requests
 
 import com.orbitz.consul.model.health.Service
-import daylightnebula.daylinmicroservices.Microservice
-import daylightnebula.daylinmicroservices.endpoints.EndpointResult
+import daylightnebula.daylinmicroservices.core.Microservice
+import daylightnebula.daylinmicroservices.core.endpoints.EndpointResult
 import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -12,7 +12,8 @@ import java.util.concurrent.TimeUnit
 fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult> {
     json.put("broadcast", false)
     val address = "http://${service.address}:${service.port}/$endpoint"
-    return Requester.rawRequest(this.config.logger, address, json).completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
+    return Requester.rawRequest(this.config.logger, address, json)
+        .completeOnTimeout(EndpointResult("Timeout"), 1, TimeUnit.SECONDS)
 }
 fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<EndpointResult>? {
     val service = getService(uuid) ?: return null

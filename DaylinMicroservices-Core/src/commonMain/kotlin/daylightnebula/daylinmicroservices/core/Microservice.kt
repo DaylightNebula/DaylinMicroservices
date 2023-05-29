@@ -1,11 +1,11 @@
-package daylightnebula.daylinmicroservices
+package daylightnebula.daylinmicroservices.core
 
 import com.orbitz.consul.Consul
 import com.orbitz.consul.model.agent.ImmutableRegCheck
 import com.orbitz.consul.model.agent.ImmutableRegistration
 import com.orbitz.consul.model.agent.Registration.RegCheck
 import com.orbitz.consul.model.health.Service
-import daylightnebula.daylinmicroservices.requests.Requester
+import daylightnebula.daylinmicroservices.core.requests.Requester
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*

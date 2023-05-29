@@ -1,4 +1,4 @@
-package daylightnebula.daylinmicroservices
+package daylightnebula.daylinmicroservices.core
 
 import org.json.JSONObject
 import java.lang.Thread.sleep

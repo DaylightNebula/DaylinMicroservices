@@ -7,4 +7,5 @@
 - [ ] Integrate into core
 - [ ] Migrate core to new schemas
 - [ ] Migrate CLI to new schemas
+- [ ] Migrate core to multiplatform
 - [ ] Write core tests
