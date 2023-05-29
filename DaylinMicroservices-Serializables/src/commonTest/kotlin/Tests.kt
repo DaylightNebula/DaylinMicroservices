@@ -1,8 +1,10 @@
 import daylightnebula.daylinmicroservices.serializables.DynamicObject
 import daylightnebula.daylinmicroservices.serializables.Schema
 import daylightnebula.daylinmicroservices.serializables.SchemaElement
+import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
 import kotlin.test.assertFails
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 val testSchema = Schema(
@@ -16,18 +18,18 @@ val testSchema = Schema(
     ))
 )
 
-val testValidObject = DynamicObject(testSchema)
+val testValidObject = DynamicObject()
     .put("name", "Bobby")
     .put("lastTimes", listOf<Number>())
     .put("position", arrayOf(32, 32, 32))
-    .put("info", DynamicObject(testSchema, "info")
+    .put("info", DynamicObject()
         .put("age", 32)
         .put("image", "asfdabwer".toByteArray())
         .put("enabled", false)
     )
 
 
-val testInvalidObject = DynamicObject(testSchema)
+val testInvalidObject = DynamicObject()
     .put("name", "Bobby")
 //    .put("lastTimes", listOf<Number>())
 //    .put("position", arrayOf(32, 32, 32))
@@ -40,11 +42,21 @@ val testInvalidObject = DynamicObject(testSchema)
 class Tests {
     @Test
     fun testTrue() {
-        assertTrue { testSchema.validate(testValidObject.getOutput()) }
+        assertTrue {
+            val result = testValidObject.validateToResult(testSchema)
+            if (result.isOk())
+                testSchema.validate(result.unwrap() as JsonObject)
+            else false
+        }
     }
 
     @Test
     fun testInvalid() {
-        assertFails { testSchema.validate(testInvalidObject.getOutput()) }
+        assertFalse {
+            val result = testInvalidObject.validateToResult(testSchema)
+            if (result.isOk())
+                testSchema.validate(result.unwrap() as JsonObject)
+            else false
+        }
     }
 }

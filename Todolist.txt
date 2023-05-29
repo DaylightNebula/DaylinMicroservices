@@ -1,28 +1,10 @@
 ===== Version 0.3 =====
-- [x] Extension functions for list of completable futures that when the first returns not null, a callback is called
-- [x] Add better docker container for connection detection
-- [x] Finalize removal of file system
-- [x] Switch to specified IDs instead of random IDs (works better with Consul)
-- [x] Fix inconsistencies in request and responses
-    - [x] Endpoint Result Objects
-        - [x] Error result
-        - [x] Ok result
-- [ ] UI Interface
-    - [ ] Consul URL option if nothing is found on normal URL
-    - [ ] Sidebar
-        - [ ] Home button
-        - [ ] List of all services
-        - [ ] When one is clicked, open it in the center panel
-    - [ ] Center panel
-        - [ ] Home panel
-            - [ ] List of active services
-            - [ ] Each one opens center panel for the service
-        - [ ] Center panel
-            - [ ] List of endpoints
-                - [ ] When one is clicked, open menu
-                    - [ ] Info of endpoint
-                    - [ ] Scrollable list of key value pairs that will be turned into a json object and sent with the request
-                    - [ ] List of previous calls
-                        - [ ] When clicked, fill in above list
-- [ ] Kubernetes
-- [ ] Auto docker images
+- [x] Schemas
+- [x] Dynamic Objects that are validated by schema
+- [x] Serializable results with Json or Error
+- [ ] Defaults in schemas
+- [ ] Optionals in schemas
+- [ ] Integrate into core
+- [ ] Migrate core to new schemas
+- [ ] Migrate CLI to new schemas
+- [ ] Write core tests

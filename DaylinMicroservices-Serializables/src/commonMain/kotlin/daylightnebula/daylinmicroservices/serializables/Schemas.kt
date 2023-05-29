@@ -6,6 +6,7 @@ import kotlinx.serialization.json.*
 // extra info to go with
 @Serializable
 sealed class SchemaElement(val isValid: (element: JsonElement) -> kotlin.Boolean) {
+    // basic types
     class Boolean(): SchemaElement({ element -> element is JsonPrimitive && element.jsonPrimitive.booleanOrNull != null })
     class Number(): SchemaElement({ element -> element is JsonPrimitive && element.jsonPrimitive.doubleOrNull != null })
     class String(): SchemaElement({ element -> element is JsonPrimitive && element.jsonPrimitive.contentOrNull != null })
@@ -33,6 +34,9 @@ class Schema(val elements: HashMap<String, SchemaElement>) {
         }
         return output
     }
+
+    // get function
+    operator fun get(key: String) = elements[key]
 }
 
 // function to make schemas easier to assemble
