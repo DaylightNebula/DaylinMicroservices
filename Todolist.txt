@@ -2,7 +2,7 @@
 - [x] Schemas
 - [x] Dynamic Objects that are validated by schema
 - [x] Serializable results with Json or Error
-- [ ] Defaults in schemas
+- [x] Defaults in schemas
 - [ ] Optionals in schemas
 - [ ] Integrate into core
 - [ ] Migrate core to new schemas

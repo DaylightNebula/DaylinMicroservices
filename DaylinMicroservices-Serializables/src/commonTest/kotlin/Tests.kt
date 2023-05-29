@@ -2,10 +2,9 @@ import daylightnebula.daylinmicroservices.serializables.DynamicObject
 import daylightnebula.daylinmicroservices.serializables.Schema
 import daylightnebula.daylinmicroservices.serializables.SchemaElement
 import kotlinx.serialization.json.JsonObject
-import kotlin.test.Test
-import kotlin.test.assertFails
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.test.*
 
 val testSchema = Schema(
     "name" to SchemaElement.String(),
@@ -31,13 +30,22 @@ val testValidObject = DynamicObject()
 
 val testInvalidObject = DynamicObject()
     .put("name", "Bobby")
-//    .put("lastTimes", listOf<Number>())
-//    .put("position", arrayOf(32, 32, 32))
-//    .put("info", DynamicObject(testSchema, "info")
-//        .put("age", 32)
-//        .put("image", "asfdabwer".toByteArray())
-//        .put("enabled", false)
-//    )
+
+val testDefaultSchema = Schema(
+    "name" to SchemaElement.String(),
+    "age" to SchemaElement.Default(SchemaElement.Number(), -1)
+)
+
+val testDefaultObject1 = DynamicObject()
+    .put("name", "Bobby")
+
+val testDefaultObject2 = DynamicObject()
+    .put("name", "Joe")
+    .put("age", 30)
+
+val testDefaultObject3 = DynamicObject()
+    .put("name", "Michelle")
+    .put("age", "abc")
 
 class Tests {
     @Test
@@ -58,5 +66,41 @@ class Tests {
                 testSchema.validate(result.unwrap() as JsonObject)
             else false
         }
+    }
+
+    @Test
+    fun testDefaults1() = assertTrue {
+        val result = testDefaultObject1.validateToResult(testDefaultSchema)
+
+        if (result.isOk()) {
+            val json = result.unwrap() as JsonObject
+            if (json.containsKey("age"))
+                (json["age"]?.jsonPrimitive?.int ?: 0) == -1
+            else false
+        } else false
+    }
+
+    @Test
+    fun testDefaults2() = assertTrue {
+        val result = testDefaultObject2.validateToResult(testDefaultSchema)
+
+        if (result.isOk()) {
+            val json = result.unwrap() as JsonObject
+            if (json.containsKey("age"))
+                (json["age"]?.jsonPrimitive?.int ?: 0) == 30
+            else false
+        } else false
+    }
+
+    @Test
+    fun testDefaults3() = assertTrue {
+        val result = testDefaultObject3.validateToResult(testDefaultSchema)
+
+        if (result.isOk()) {
+            val json = result.unwrap() as JsonObject
+            if (json.containsKey("age"))
+                (json["age"]?.jsonPrimitive?.int ?: 0) == -1
+            else false
+        } else false
     }
 }

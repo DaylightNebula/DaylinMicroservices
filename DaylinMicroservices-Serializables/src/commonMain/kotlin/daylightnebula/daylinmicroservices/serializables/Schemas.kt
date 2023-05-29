@@ -16,6 +16,11 @@ sealed class SchemaElement(val isValid: (element: JsonElement) -> kotlin.Boolean
     class List(val subElementKey: SchemaElement): SchemaElement({ element -> element is JsonArray })
     class Array(val subElementKey: SchemaElement, val size: Int): SchemaElement({ element -> element is JsonArray && element.jsonArray.size == size })
     class Object(val schema: Schema): SchemaElement({ element -> element is JsonObject && schema.validate(element) })
+
+    // default object
+    class Default(val schema: SchemaElement, val default: JsonElement): SchemaElement({ true }) {
+        constructor(schema: SchemaElement, default: Any): this(schema, anyToJson(schema, default).unwrapOrError("Given default did not match given schema!"))
+    }
 }
 
 // class description of schema with a list of names and their corresponding schema elements

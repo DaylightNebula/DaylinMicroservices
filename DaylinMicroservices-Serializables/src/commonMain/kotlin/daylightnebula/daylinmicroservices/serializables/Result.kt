@@ -19,4 +19,10 @@ sealed class Result() {
     // getter functions
     fun unwrap(): JsonElement = (this as Ok).json
     fun error(): String = (this as Error).error
+
+    // default functions
+    fun unwrapOr(default: JsonElement) = if (this is Ok) this.json else default
+    fun unwrapOrError(error: String) = if (this is Ok) this.json else throw ResultException(error)
 }
+
+class ResultException(message: String): Exception(message)
