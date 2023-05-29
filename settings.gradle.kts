@@ -1,4 +1,4 @@
 rootProject.name = "DaylinMicroservices"
 include("DaylinMicroservices-Core")
 include("DaylinMicroservices-CLIInterface")
-include("DaylinMicroservices-GUI")
+include("DaylinMicroservices-Serializables")

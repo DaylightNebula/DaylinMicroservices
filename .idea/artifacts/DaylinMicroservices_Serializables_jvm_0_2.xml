@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="DaylinMicroservices-Serializables-jvm-0.2">
+    <output-path>$PROJECT_DIR$/DaylinMicroservices-Serializables/build/libs</output-path>
+    <root id="archive" name="DaylinMicroservices-Serializables-jvm-0.2.jar">
+      <element id="module-output" name="DaylinMicroservices.DaylinMicroservices-Serializables.jvmMain" />
+    </root>
+  </artifact>
+</component>
