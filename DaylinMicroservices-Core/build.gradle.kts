@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+
 plugins {
     kotlin("multiplatform") version "1.8.21"
     kotlin("plugin.serialization") version "1.8.21"
@@ -9,14 +10,18 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+
+}
+
 kotlin {
     jvm()
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                // json
-                implementation("org.json:json:20230227")
+                // basics
+                implementation(project(":DaylinMicroservices-Serializables"))
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
 
                 // ktor server

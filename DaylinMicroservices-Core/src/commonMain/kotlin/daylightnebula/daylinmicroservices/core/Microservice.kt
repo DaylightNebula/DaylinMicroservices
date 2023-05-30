@@ -1,25 +1,29 @@
 package daylightnebula.daylinmicroservices.core
 
+import com.fasterxml.jackson.databind.jsonschema.SchemaAware
 import com.orbitz.consul.Consul
 import com.orbitz.consul.model.agent.ImmutableRegCheck
 import com.orbitz.consul.model.agent.ImmutableRegistration
-import com.orbitz.consul.model.agent.Registration.RegCheck
 import com.orbitz.consul.model.health.Service
-import daylightnebula.daylinmicroservices.core.requests.Requester
+import daylightnebula.daylinmicroservices.core.utils.loopingThread
+import daylightnebula.daylinmicroservices.serializables.DynamicObject
+import daylightnebula.daylinmicroservices.serializables.Result
+import daylightnebula.daylinmicroservices.serializables.Schema
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import org.json.JSONArray
-import org.json.JSONObject
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import java.net.InetAddress
-import java.util.*
 import kotlin.collections.HashMap
 
 class Microservice(
     internal val config: MicroserviceConfig,
-    private val endpoints: HashMap<String, (json: JSONObject) -> JSONObject>,
+    private val endpoints: HashMap<String, Pair<Schema, (json: DynamicObject) -> Result<DynamicObject>>>,
 
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
@@ -95,16 +99,28 @@ class Microservice(
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
         // setup ping callback, adding to any preexisting version
-        val pingCallback = endpoints[""] ?: { JSONObject() }
-        endpoints[""] = { pingCallback(it).put("status", "ok") }
+        val pingCallback: Pair<Schema, (DynamicObject) -> Result<DynamicObject>> =
+            endpoints[""] ?: (Schema() to { Result.Ok(DynamicObject().put("ok", "ok")) })
+        endpoints[""] = Schema() to {
+            val result = pingCallback.second(it)
+            if (result.isOk())
+                Result.Ok(result.unwrap().put("status", "ok"))
+            else Result.Error(result.error())
+        }
 
         // do the same with info
-        val infoCallback = endpoints["info"] ?: { JSONObject() }
-        endpoints["info"] = {
-            infoCallback(it)
-                .put("name", config.name)
-                .put("tags", config.tags)
-                .put("endpoints", JSONArray().putAll(endpoints.keys))
+        val infoCallback: Pair<Schema, (DynamicObject) -> Result<DynamicObject>> =
+            endpoints["info"] ?: (Schema() to { Result.Ok(DynamicObject()) })
+        endpoints["info"] = Schema() to {
+            val result = infoCallback.second(it)
+            if (result.isOk())
+                Result.Ok(
+                    result.unwrap()
+                        .put("name", config.name)
+                        .put("tags", config.tags)
+                        .put("endpoints", endpoints.keys)
+                )
+            else Result.Error(result.error())
         }
     }
 
@@ -112,25 +128,32 @@ class Microservice(
     private val module: Application.() -> Unit = {
         config.logger.info("Creating endpoints...")
         routing {
-            endpoints.forEach { (name, callback) ->
+            endpoints.forEach { (name, pair) ->
+                val (schema, callback) = pair
                 get("/$name") {
-                    // get json, cancel if null
+                    // get json, error if null
                     val jsonString = this.call.request.queryParameters["json"]
-                    val json =
-                        try { JSONObject(jsonString) }
-                        catch (ex: Exception) {
-                            if (name == "") this.call.respondText("{}") else this.call.respondText("")
-                            return@get
+                    var result =
+                        try {
+                            val json = jsonString?.let { Json.parseToJsonElement(it).jsonObject }
+                            if (json != null)
+                                DynamicObject.deserialize(schema, json)
+                            else Result.Error("Could not get json object to deserialize dynamic object")
+                        } catch (ex: Exception) {
+                            Result.Error("Could not deserialize dynamic object!")
                         }
 
                     // try to get the result, if an error is thrown, return null
-                    val result = try {
-                        callback(json)
-                    } catch (ex: Exception) { ex.printStackTrace(); null }
-                    val resultString = result?.toString(4) ?: ""
+                    if (result.isOk()) {
+                        result = try {
+                            callback(result.unwrap())
+                        } catch (ex: Exception) {
+                            Result.Error("Endpoint failed with error: ${ex.message ?: " Unknown Error"}")
+                        }
+                    }
 
                     // send back result
-                    this.call.respondText(resultString)
+                    this.call.respondText(Json.encodeToString(result))
                 }
                 config.logger.info("Created endpoint /$name")
             }

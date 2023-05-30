@@ -1,6 +1,9 @@
 package daylightnebula.daylinmicroservices.core
 
-import org.json.JSONObject
+import daylightnebula.daylinmicroservices.serializables.DynamicObject
+import daylightnebula.daylinmicroservices.serializables.Result
+import daylightnebula.daylinmicroservices.serializables.Schema
+import daylightnebula.daylinmicroservices.serializables.SchemaElement
 import java.lang.Thread.sleep
 
 val service = Microservice(
@@ -10,15 +13,13 @@ val service = Microservice(
         listOf()
     ),
     endpoints = hashMapOf(
-        "test" to { json ->
-            JSONObject().put("test", true)
-        }
+        "test" to (Schema("test" to SchemaElement.Boolean()) to { json ->
+            Result.Ok(DynamicObject().put("test", true))
+        })
     )
 )
 fun main(args: Array<String>) {
     service.start()
 
     while(true) {}
-//    sleep(10000)
-//    service.dispose()
 }
