@@ -185,8 +185,10 @@ private fun convertFromArray(schema: SchemaElement.Array, value: Any): Result<Js
             })
     ) else Result.Error("Invalid input array")
 private fun convertFromObject(schema: SchemaElement.Object, value: Any): Result<JsonElement> =
-    if (value is DynamicObject) Result.Ok(JsonObject(hashMapOf()))
-    else Result.Error("Invalid input dynamic object")
+    if (value is DynamicObject) {
+        val result = value.validateToResult(schema.schema)
+        if (result.isOk()) Result.Ok(result.unwrap()) else Result.Error("jo")
+    } else Result.Error("Invalid input dynamic object")
 
 // default and optional conversions
 private fun convertFromOptional(schema: SchemaElement, value: Any): Result<JsonElement>
