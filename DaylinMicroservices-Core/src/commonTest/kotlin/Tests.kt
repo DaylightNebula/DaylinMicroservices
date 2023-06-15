@@ -5,7 +5,9 @@ import daylightnebula.daylinmicroservices.serializables.Schema
 import daylightnebula.daylinmicroservices.serializables.SchemaElement
 import daylightnebula.daylinmicroservices.serializables.Result
 import org.json.JSONObject
+import org.junit.FixMethodOrder
 import org.junit.Test
+import org.junit.runners.MethodSorters
 import java.lang.Thread.sleep
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -22,6 +24,7 @@ val svc2Config = MicroserviceConfig(
     listOf()
 )
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class Tests {
     @Test
     fun testInfo() {
@@ -36,6 +39,9 @@ class Tests {
                 response.getString("info") == "hi"
             } else false
         }
+
+        svc1.dispose()
+        svc2.dispose()
     }
 
     @Test
@@ -50,6 +56,9 @@ class Tests {
                 response.isError()
             } else false
         }
+
+        svc1.dispose()
+        svc2.dispose()
     }
 
     fun startTestServices(): Pair<Microservice, Microservice> {
