@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Core/DaylinMicroservices.DaylinMicroservices-Core.commonMain.iml" filepath="$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Core/DaylinMicroservices.DaylinMicroservices-Core.commonMain.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Core/DaylinMicroservices.DaylinMicroservices-Core.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Core/DaylinMicroservices.DaylinMicroservices-Core.commonTest.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Serializables/DaylinMicroservices.DaylinMicroservices-Serializables.commonMain.iml" filepath="$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Serializables/DaylinMicroservices.DaylinMicroservices-Serializables.commonMain.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Serializables/DaylinMicroservices.DaylinMicroservices-Serializables.commonTest.iml" filepath="$PROJECT_DIR$/.idea/modules/DaylinMicroservices-Serializables/DaylinMicroservices.DaylinMicroservices-Serializables.commonTest.iml" />
+    </modules>
+  </component>
+</project>
