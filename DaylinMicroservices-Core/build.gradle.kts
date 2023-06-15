@@ -33,6 +33,8 @@ kotlin {
 
                 // consul
                 implementation("com.orbitz.consul:consul-client:1.5.3")
+
+                implementation(project(":DaylinMicroservices-Serializables"))
             }
         }
 
@@ -40,6 +42,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-test:1.8.21")
                 implementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
+                implementation(project(":DaylinMicroservices-Serializables"))
             }
         }
     }

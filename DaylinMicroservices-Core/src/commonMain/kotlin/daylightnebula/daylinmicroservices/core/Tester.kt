@@ -1,5 +1,7 @@
 package daylightnebula.daylinmicroservices.core
 
+import daylightnebula.daylinmicroservices.serializables.Result
+import daylightnebula.daylinmicroservices.serializables.Schema
 import org.json.JSONObject
 import java.lang.Thread.sleep
 
@@ -10,9 +12,9 @@ val service = Microservice(
         listOf()
     ),
     endpoints = hashMapOf(
-        "test" to { json ->
-            JSONObject().put("test", true)
-        }
+        "test" to (Schema() to { json ->
+            Result.Ok(JSONObject().put("test", true))
+        })
     )
 )
 fun main(args: Array<String>) {
