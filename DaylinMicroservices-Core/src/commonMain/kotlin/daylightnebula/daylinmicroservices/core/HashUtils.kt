@@ -1,7 +1,7 @@
 
 // Code originally by LongClipeus (link: https://gist.github.com/LongClipeus/84db46e7d9714f67c4cbc40a67c8be1e)
 
-package daylightnebula.daylinmicroservices.core.utils
+package daylightnebula.daylinmicroservices.core
 
 import java.io.ByteArrayInputStream
 import java.io.File

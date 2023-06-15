@@ -1,7 +1,7 @@
 package daylightnebula.daylinmicroservices.core
 
-import kotlinx.serialization.json.*
 import mu.KotlinLogging
+import org.json.JSONObject
 import org.slf4j.Logger
 import java.io.BufferedReader
 import java.io.File
@@ -13,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
 import java.util.function.Predicate
+
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
@@ -35,18 +36,18 @@ data class MicroserviceConfig(
     }
 
     // load from a json object
-    constructor(json: JsonObject): this(
-        json["id"]?.jsonPrimitive?.contentOrNull ?: "",
-        json["name"]?.jsonPrimitive?.contentOrNull ?: "",
-        json["tags"]?.jsonArray?.map { it as String } ?: listOf(),
-        json["port"]?.jsonPrimitive?.intOrNull ?: 0,
-        json["consulUrl"]?.jsonPrimitive?.contentOrNull ?: "",
-        json["consulRefUrl"]?.jsonPrimitive?.contentOrNull ?: ""
+    constructor(json: JSONObject): this(
+        json.optString("id", ""),
+        json.optString("name", ""),
+        json.optJSONArray("tags")?.map { it as String } ?: listOf(),
+        json.optInt("port", 0),
+        json.optString("consulUrl", ""),
+        json.optString("consulRefUrl", "")
     )
 
     // load from a json object in a file
     constructor(file: File): this(
-        if (file.exists()) Json.parseToJsonElement(file.readText()).jsonObject else throw IllegalArgumentException("Config file given must exist!  Path: ${file.absolutePath}")
+        if (file.exists()) JSONObject(file.readText()) else throw IllegalArgumentException("Config file given must exist!  Path: ${file.absolutePath}")
     )
 
     // function that finds an open port if necessary

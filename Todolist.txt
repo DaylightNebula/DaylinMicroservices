@@ -4,6 +4,8 @@
 - [x] Serializable results with Json or Error
 - [x] Defaults in schemas
 - [x] Optionals in schemas
-- [x] Integrate schemas and dynamic objects into core
-- [x] Migrate core to new schemas
-- [x] Migrate core to multiplatform
+- [ ] Integrate into core
+- [ ] Migrate core to new schemas
+- [ ] Migrate CLI to new schemas
+- [ ] Migrate core to multiplatform
+- [ ] Write core tests
