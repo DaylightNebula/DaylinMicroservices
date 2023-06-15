@@ -62,12 +62,12 @@ val testOption2 = DynamicObject()
 class Tests {
     @Test
     fun testTrue() {
-        val result = testValidObject.validateToResult(testSchema)
-        if (result.isError()) {
-            println("ERROR: ${result.error()}")
+        assertTrue {
+            val result = testValidObject.validateToResult(testSchema)
+            if (result.isOk())
+                testSchema.validate(result.unwrap() as JsonObject)
+            else false
         }
-        assertTrue { result.isOk() }
-        assertTrue { testSchema.validate(result.unwrap() as JsonObject) }
     }
 
     @Test

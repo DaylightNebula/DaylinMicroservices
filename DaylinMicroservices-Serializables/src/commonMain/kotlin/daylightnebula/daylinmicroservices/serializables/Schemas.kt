@@ -38,16 +38,11 @@ class Schema(val elements: HashMap<String, SchemaElement>) {
             if (element !is SchemaElement.Optional) {
                 // make sure json has the given key
                 if (!json.containsKey(key)) {
-                    println("VALIDATION ERROR: No key $key")
-                    output = false;
-                    return@forEach
+                    output = false; return@forEach
                 }
 
                 // validate the json at the key
-                if (!element.isValid(json[key]!!)) {
-                    println("VALIDATION ERROR: Not valid at key $key")
-                    output = false
-                }
+                if (!element.isValid(json[key]!!)) output = false
             }
             // otherwise, validate optionally
             else {
