@@ -15,8 +15,8 @@ repositories {
 Then add this to your dependencies list.  
 ```kotlin
 dependencies {
-  implementation("com.github.DaylightNebula.DaylinMicroservices:DaylinMicroservices-Core:0.2.1")
-  // 0.2.1 may need to be changed to the lastest version in case I forgot to update this readme file.
+  implementation("com.github.DaylightNebula.DaylinMicroservices:DaylinMicroservices-Core:0.4")
+  // 0.4 may need to be changed to the lastest version in case I forgot to update this readme file.
   // you can also use master-SNAPSHOT as the version if you are feeling brave. 
   // However, I use master as my development branch so use at your own risk.
 }
