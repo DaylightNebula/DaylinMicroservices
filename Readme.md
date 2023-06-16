@@ -30,9 +30,9 @@ Here is an example of a service that once started will simple return a json obje
 val service = Microservice(
     MicroserviceConfig("test", listOf()),
     endpoints = hashMapOf(
-        "hello" to { json ->
+        "hello" to ( Schema() to { json ->
             JSONObject().put("hello", true)
-        }
+        })
     )
 )
 ```
