@@ -4,7 +4,6 @@ import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.core.Microservice
 import daylightnebula.daylinmicroservices.serializables.Result
 import org.json.JSONObject
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
