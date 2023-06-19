@@ -14,6 +14,10 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
 //kotlin {
 //    jvm()
 //

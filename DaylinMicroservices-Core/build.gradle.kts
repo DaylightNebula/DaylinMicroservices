@@ -42,6 +42,10 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
     archiveFileName.set("DaylinMicroservices-Core.jar")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+}
+
 //kotlin {
 //    jvm()
 //
