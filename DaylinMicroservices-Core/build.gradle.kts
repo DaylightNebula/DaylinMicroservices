@@ -10,8 +10,6 @@ repositories {
 }
 
 dependencies {
-//    implementation(kotlin("stdlib-jvm"))
-
     // json
     implementation("org.json:json:20230227")
 
@@ -31,7 +29,11 @@ dependencies {
     // consul
     implementation("com.orbitz.consul:consul-client:1.5.3")
 
+    // other modules
     implementation(project(":DaylinMicroservices-Serializables"))
+
+    // tests
+    implementation(kotlin("test"))
 }
 
 //kotlin {

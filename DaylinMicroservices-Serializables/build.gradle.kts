@@ -10,6 +10,7 @@ repositories {
 dependencies {
 //    implementation(kotlin("stdlib-jvm"))
     implementation("org.json:json:20230227")
+    testImplementation(kotlin("test"))
 }
 
 //kotlin {
