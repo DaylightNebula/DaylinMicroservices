@@ -37,6 +37,10 @@ dependencies {
     implementation(kotlin("test"))
 }
 
+tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    archiveFileName.set("DaylinMicroservices-Core.jar")
+}
+
 //kotlin {
 //    jvm()
 //
