@@ -82,7 +82,7 @@ The endpoints hashmap is a hashmap with a string key, that represents the callba
 
 Here is an example endpoint that returns a json object with "hi" set to true if the endpoint "bob" is called
 ```kotlin
-"bob" to { json ->
+"bob" to ( Schema() to { json ->
     JSONObject().put("hi", true)
-}
+})
 ```
