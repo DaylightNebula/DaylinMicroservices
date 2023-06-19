@@ -1,6 +1,6 @@
 allprojects {
     version = "0.4.1"
-    group = 'io.github.daylightnebula'
+    group = 'com.github.daylightnebula'
 }
 
 subprojects {
