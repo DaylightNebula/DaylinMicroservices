@@ -35,7 +35,10 @@ sealed class Result<T>() {
 fun JSONObject.toResult(): Result<JSONObject> {
     if (has("ok")) return Result.Ok(getJSONObject("ok"))
     else if (has("error")) return Result.Error(getString("error"))
-    else throw IllegalArgumentException("Unable to convert json object to result!")
+    else {
+        Result.Ok(this)
+        println("WARN Converting objects to directly to ok results is deprecated!")
+    }
 }
 
 class ResultException(message: String): Exception(message)
