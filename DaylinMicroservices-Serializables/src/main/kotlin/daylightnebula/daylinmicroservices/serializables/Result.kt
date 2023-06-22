@@ -36,8 +36,8 @@ fun JSONObject.toResult(): Result<JSONObject> {
     if (has("ok")) return Result.Ok(getJSONObject("ok"))
     else if (has("error")) return Result.Error(getString("error"))
     else {
-        Result.Ok(this)
         println("WARN Converting objects to directly to ok results is deprecated!")
+        return Result.Ok(this)
     }
 }
 
