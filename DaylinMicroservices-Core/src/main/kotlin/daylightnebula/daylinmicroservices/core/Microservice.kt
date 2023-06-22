@@ -27,7 +27,7 @@ class Microservice(
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
     private val onServiceClose: (serv: Service) -> Unit = {}
-): Thread() {
+) {
 
     // server stuff
     private lateinit var server: NettyApplicationEngine
@@ -55,7 +55,7 @@ class Microservice(
     }
 
     // just start the server on this thread
-    override fun run() {
+    fun start() {
         // create microservice server and endpoints
         setupDefaults()
         server = embeddedServer(Netty, port = config.port, module = module)
