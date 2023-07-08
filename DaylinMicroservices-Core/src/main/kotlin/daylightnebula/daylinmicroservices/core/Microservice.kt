@@ -62,11 +62,9 @@ class Microservice(
 
         // setup health check
         val check = ImmutableRegCheck.builder()
-            .http("http://${InetAddress.getLocalHost().hostAddress}:${config.port}/")
+            .http(config.consulRefUrl)
             .interval("1s")
-//            .timeout("1s")
             .deregisterCriticalServiceAfter("100ms")
-//            .deregisterCriticalServiceAfter("1s")
             .build()
 
         // setup consul
