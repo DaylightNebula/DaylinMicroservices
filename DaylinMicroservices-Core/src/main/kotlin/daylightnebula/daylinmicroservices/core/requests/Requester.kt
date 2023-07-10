@@ -24,7 +24,7 @@ internal object Requester {
                 val response = try {
                     HttpClient(CIO) {
                         install(HttpTimeout) {
-                            requestTimeoutMillis = 3000
+                            requestTimeoutMillis = 5000
                         }
                     }.get(address, block = {
                         parameter("json", json.toString(1))

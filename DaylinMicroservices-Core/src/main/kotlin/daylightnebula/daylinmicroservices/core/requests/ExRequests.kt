@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit
 fun Microservice.request(address: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
     json.put("broadcast", false)
     return Requester.rawRequest(this.config.logger, address, json)
-        .completeOnTimeout(Result.Error<JSONObject>("Timeout"), 1, TimeUnit.SECONDS)
+        .completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
     var targetAddress = service.address
@@ -21,15 +21,15 @@ fun Microservice.request(service: Service, endpoint: String, json: JSONObject): 
 }
 fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val service = getService(uuid) ?: return null
-    return request(service, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 1, TimeUnit.SECONDS)
+    return request(service, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val serviceEntry = getServiceWithName(name) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 1, TimeUnit.SECONDS)
+    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val serviceEntry = getServiceWithTag(tag) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 1, TimeUnit.SECONDS)
+    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 
 // broadcast to services
