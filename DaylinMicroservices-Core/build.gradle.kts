@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("java")
     kotlin("jvm") version "1.8.21"
-    kotlin("plugin.serialization") version "1.8.21"
     id("com.github.johnrengelman.shadow") version "7.0.0"
 }
 
@@ -45,20 +44,3 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 java {
     sourceCompatibility = JavaVersion.VERSION_11
 }
-
-//kotlin {
-//    jvm()
-//
-//    sourceSets {
-//        val commonMain by getting {
-//        }
-//
-//        val commonTest by getting {
-//            dependencies {
-//                implementation("org.jetbrains.kotlin:kotlin-test:1.8.21")
-//                implementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-//                implementation(project(":DaylinMicroservices-Serializables"))
-//            }
-//        }
-//    }
-//}
