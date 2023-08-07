@@ -22,6 +22,7 @@ import kotlin.collections.HashMap
 
 class Microservice(
     internal val config: MicroserviceConfig,
+    internal val consulAddr: String = "localhost",
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
 
     // callbacks for when a service starts and closes
@@ -74,7 +75,7 @@ class Microservice(
                 .id(config.id)
                 .tags(config.tags)
                 .name(config.name)
-                .address("localhost")
+                .address(consulAddr)
                 .port(config.port)
                 .addChecks(check)
                 .build()
