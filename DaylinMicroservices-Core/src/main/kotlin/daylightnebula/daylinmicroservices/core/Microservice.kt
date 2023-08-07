@@ -22,7 +22,6 @@ import kotlin.collections.HashMap
 
 class Microservice(
     internal val config: MicroserviceConfig,
-    internal val consulAddr: String = "localhost",
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
 
     // callbacks for when a service starts and closes
@@ -62,24 +61,26 @@ class Microservice(
         server = embeddedServer(Netty, port = config.port, module = module)
 
         // setup health check
-        val check = ImmutableRegCheck.builder()
-            .http(config.consulRefUrl)
-            .interval("1s")
-            .deregisterCriticalServiceAfter("100ms")
-            .build()
+        val doRegCheckEnv = System.getenv("doRegCheck")
+        val doRegCheck = if (doRegCheckEnv != null) doRegCheckEnv == "true" else config.doRegCheck
+        val check = if (doRegCheck) {
+            ImmutableRegCheck.builder()
+                .http(System.getenv("consulRefUrl") ?: config.consulRefUrl)
+                .interval("1s")
+                .deregisterCriticalServiceAfter("100ms")
+                .build()
+        } else { null }
 
         // setup consul
-        consul = Consul.builder().withUrl(config.consulUrl).build()
-        consul.agentClient().register(
-            ImmutableRegistration.builder()
-                .id(config.id)
-                .tags(config.tags)
-                .name(config.name)
-                .address(consulAddr)
-                .port(config.port)
-                .addChecks(check)
-                .build()
-        )
+        consul = Consul.builder().withUrl(System.getenv("consulUrl") ?: config.consulUrl).build()
+        val builder = ImmutableRegistration.builder()
+            .id(config.id)
+            .tags(config.tags)
+            .name(config.name)
+            .address(System.getenv("consulAddr") ?: config.consulAddr)
+            .port(config.port)
+        if (check != null) builder.addChecks(check)
+        consul.agentClient().register(builder.build())
 
         // start server
         server.start(wait = false)

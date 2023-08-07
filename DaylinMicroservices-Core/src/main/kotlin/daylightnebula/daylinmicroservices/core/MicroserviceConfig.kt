@@ -23,6 +23,8 @@ data class MicroserviceConfig(
     var port: Int = 0,                  // the port that this service will run on
     var consulUrl: String = "",         // the url that consul is on
     var consulRefUrl: String = "",      // this is what consul will use to reference this microservice
+    val consulAddr: String = "localhost",
+    val doRegCheck: Boolean = true,     // allow consul to periodically perform a check to see if the service is active
     val logger: Logger =                // the logger that this service will write its output too
         KotlinLogging.logger("Microservice $name")
 ) {
