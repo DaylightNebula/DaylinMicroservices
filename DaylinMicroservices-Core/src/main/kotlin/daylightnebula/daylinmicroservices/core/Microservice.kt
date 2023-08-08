@@ -23,6 +23,7 @@ import kotlin.collections.HashMap
 class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
+    internal val debugRequests: Boolean = false,
 
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
