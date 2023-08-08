@@ -14,11 +14,7 @@ fun Microservice.request(address: String, endpoint: String, json: JSONObject): C
         .completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
-    var targetAddress = System.getenv("requestAddr") ?: service.address
-    if (this.debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint, json: $json")
-    if (targetAddress == "localhost" && config.isRunningInsideDocker()) targetAddress = "host.docker.internal"
-    val address = "http://${targetAddress}:${service.port}/$endpoint"
-    return request(address, endpoint, json)
+    return request(this.mapRequestAddress(service, endpoint), endpoint, json)
 }
 fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val service = getService(uuid) ?: return null

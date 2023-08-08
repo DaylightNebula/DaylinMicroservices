@@ -6,6 +6,7 @@ import com.orbitz.consul.model.agent.ImmutableRegistration
 import com.orbitz.consul.model.agent.Registration.RegCheck
 import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.core.requests.Requester
+import daylightnebula.daylinmicroservices.core.requests.request
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import daylightnebula.daylinmicroservices.serializables.validate
@@ -24,7 +25,13 @@ class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
     private val metadata: Map<String, String> = mapOf(),
-    internal val debugRequests: Boolean = false,
+    private val debugRequests: Boolean = false,
+    internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
+        var targetAddress = System.getenv("requestAddr") ?: service.address
+        if (debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint")
+        if (targetAddress == "localhost" && config.isRunningInsideDocker()) targetAddress = "host.docker.internal"
+        "http://${targetAddress}:${service.port}/$endpoint"
+    },
 
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
