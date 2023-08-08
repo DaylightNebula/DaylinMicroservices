@@ -23,6 +23,7 @@ import kotlin.collections.HashMap
 class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
+    private val metadata: Map<String, String> = mapOf(),
     internal val debugRequests: Boolean = false,
 
     // callbacks for when a service starts and closes
@@ -79,6 +80,7 @@ class Microservice(
             .tags(config.tags)
             .name(config.name)
             .address(System.getenv("consulAddr") ?: config.consulAddr)
+            .meta(metadata)
             .port(config.port)
         if (check != null) builder.addChecks(check)
         consul.agentClient().register(builder.build())
