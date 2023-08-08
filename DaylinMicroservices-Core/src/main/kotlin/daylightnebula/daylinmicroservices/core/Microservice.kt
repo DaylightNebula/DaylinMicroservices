@@ -17,6 +17,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.net.InetAddress
 import java.util.*
 import kotlin.collections.HashMap
@@ -80,13 +81,20 @@ class Microservice(
                 .build()
         } else { null }
 
+        // if in docker container, auto grab own address
+        val myAddress = if (config.isRunningInsideDocker()) {
+            val hosts = File("/etc/hosts")
+            val hostLine = hosts.readLines().last().split("\\s".toRegex())
+            hostLine.first()
+        } else { null }
+
         // setup consul
         consul = Consul.builder().withUrl(System.getenv("consulUrl") ?: config.consulUrl).build()
         val builder = ImmutableRegistration.builder()
             .id(config.id)
             .tags(config.tags)
             .name(config.name)
-            .address(System.getenv("consulAddr") ?: config.consulAddr)
+            .address(System.getenv("consulAddr") ?: myAddress ?: config.consulAddr)
             .meta(metadata)
             .port(config.port)
         if (check != null) builder.addChecks(check)
