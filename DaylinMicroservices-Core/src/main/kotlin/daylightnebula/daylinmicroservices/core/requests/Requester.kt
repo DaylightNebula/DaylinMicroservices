@@ -8,6 +8,7 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking
+import org.json.JSONException
 import org.json.JSONObject
 import org.slf4j.Logger
 import java.util.concurrent.CompletableFuture
@@ -31,8 +32,16 @@ internal object Requester {
                     })
                 } catch (ex: Exception) { logger.warn("Request failed with exception: ${ex.message}"); null }
 
-                // when request completes, call the on complete function
-                future.complete(JSONObject(response?.bodyAsText() ?: "{}").toResult())
+                // when request completes, call the on complete function, using try catch in case json conversion fails
+                val text = response?.bodyAsText() ?: "{}"
+                val result = try {
+                    JSONObject(text).toResult()
+                } catch (ex: JSONException) {
+                    val error = "Invalid input json received: $text"
+                    logger.error(error)
+                    Result.Error(error)
+                }
+                future.complete(result)
             }
         }
 
