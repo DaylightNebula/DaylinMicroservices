@@ -27,6 +27,8 @@ class Microservice(
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
     private val metadata: Map<String, String> = mapOf(),
     private val debugRequests: Boolean = false,
+    private val debugConsulCacheThread: Boolean = false,
+    private val minCacheUpdateInterval: Long = 1000L,
     internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
         var targetAddress = System.getenv("requestAddr") ?: service.address
         if (debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint")
@@ -45,8 +47,13 @@ class Microservice(
 
     // service cache
     private var serviceCache = mutableMapOf<String, Service>()
-    private val serviceCacheThread = loopingThread(1000) {
-        if (!this::consul.isInitialized) return@loopingThread
+    private val lastCacheUpdate = 0L
+    fun doCacheUpdate() {
+        // make sure can be run now
+        if (!this::consul.isInitialized) return
+        if (System.currentTimeMillis() - lastCacheUpdate < minCacheUpdateInterval) return
+
+        // get all services
         val curServices = consul.agentClient().services
 
         // check for any new services (anything in new service list that isn't in the cache)
@@ -62,6 +69,8 @@ class Microservice(
             serviceCache.remove(it.key)
             onServiceClose(it.value)
         }
+
+        if (debugConsulCacheThread) println("Completed service cache update, got ${curServices.size} services! Saving length is ${serviceCache.size}!")
     }
 
     // just start the server on this thread
@@ -106,12 +115,20 @@ class Microservice(
     }
 
     // get service functions
-    fun getService(uuid: String): Service? { return serviceCache[uuid] }
-    fun getServiceWithName(name: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
-    fun getServiceWithTag(tag: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
-    fun getServices(): Map<String, Service> { return serviceCache }
-    fun getServicesWithName(name: String): Map<String, Service> { return serviceCache.filter { it.value.service == name } }
-    fun getServicesWithTag(tag: String): Map<String, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
+    fun <T: Any> attemptTwiceWithCacheUpdate(callback: () -> T?): T? {
+        var result = callback()
+        if (result == null) {
+            doCacheUpdate()
+            result = callback()
+        }
+        return result
+    }
+    fun getService(uuid: String) = attemptTwiceWithCacheUpdate { serviceCache[uuid] }
+    fun getServiceWithName(name: String) = attemptTwiceWithCacheUpdate { serviceCache.asSequence().firstOrNull { it.value.service == name } }
+    fun getServiceWithTag(tag: String) = attemptTwiceWithCacheUpdate { serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
+    fun getServices() = serviceCache
+    fun getServicesWithName(name: String) = attemptTwiceWithCacheUpdate { serviceCache.filter { it.value.service == name } }!!
+    fun getServicesWithTag(tag: String) = attemptTwiceWithCacheUpdate { serviceCache.filter { it.value.tags.contains(tag) } }!!
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
@@ -178,7 +195,6 @@ class Microservice(
 
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
-        serviceCacheThread.dispose()
         consul.agentClient().deregister(config.id)
         server.stop(1000, 1000)
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")
