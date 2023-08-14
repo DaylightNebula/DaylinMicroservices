@@ -181,8 +181,8 @@ class Microservice(
                     // try to get the result, if an error is thrown, return null
                     val result = try {
                         callback.second(json)
-                    } catch (ex: Exception) { ex.printStackTrace(); null }
-                    val resultString = result?.serialize()?.toString(0) ?: ""
+                    } catch (ex: Exception) { ex.printStackTrace(); Result.Error<JSONObject>("Endpoint failed with error: ${ex.message ?: "no error message"}") }
+                    val resultString = result.serialize().toString(0)
 
                     // send back result
                     this.call.respondText(resultString)
