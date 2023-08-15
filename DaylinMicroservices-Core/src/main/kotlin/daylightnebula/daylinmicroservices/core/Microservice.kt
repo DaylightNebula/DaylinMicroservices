@@ -1,12 +1,6 @@
 package daylightnebula.daylinmicroservices.core
 
-import com.orbitz.consul.Consul
-import com.orbitz.consul.model.agent.ImmutableRegCheck
-import com.orbitz.consul.model.agent.ImmutableRegistration
-import com.orbitz.consul.model.agent.Registration.RegCheck
-import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.core.requests.Requester
-import daylightnebula.daylinmicroservices.core.requests.request
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import daylightnebula.daylinmicroservices.serializables.validate
@@ -21,6 +15,7 @@ import java.io.File
 import java.net.InetAddress
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.time.Duration
 
 class Microservice(
     internal val config: MicroserviceConfig,
@@ -30,66 +25,32 @@ class Microservice(
     private val debugConsulCacheThread: Boolean = false,
     private val minCacheUpdateInterval: Long = 1000L,
     internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
-        var targetAddress = System.getenv("requestAddr") ?: service.address
-        if (debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint")
-        if (targetAddress == "localhost" && config.isRunningInsideDocker()) targetAddress = "host.docker.internal"
-        "http://${targetAddress}:${service.port}/$endpoint"
+        "${System.getenv("requestAddr") ?: service.address}/$endpoint"
     },
 
     // callbacks for when a service starts and closes
     private val onServiceOpen: (serv: Service) -> Unit = {},
     private val onServiceClose: (serv: Service) -> Unit = {}
 ): Thread() {
+    // TODO populate service list off of add
+    // service entry for self
+    val address = if (isRunningInsideDocker()) {
+        val hosts = File("/etc/hosts")
+        val hostLine = hosts.readLines().last().split("\\s".toRegex())
+        "http://${hostLine.first()}:${config.port}"
+    } else { "http://localhost:${config.port}" }
+    val service = Service(
+        config.id,
+        config.name,
+        config.tags,
+        address,
+        metadata,
+        Duration.parse(config.registerUpdateInterval).inWholeMilliseconds
+    )
 
     // server stuff
     private lateinit var server: NettyApplicationEngine
-    private lateinit var consul: Consul
-    private val serviceCacheThread = loopingThread(1000) {
-        if (!this::consul.isInitialized) return@loopingThread
-        val curServices = consul.agentClient().services
-
-        // check for any new services (anything in new service list that isn't in the cache)
-        val newServices = curServices.filter { !serviceCache.contains(it.key) }
-        newServices.forEach {
-            serviceCache[it.key] = it.value
-            onServiceOpen(it.value)
-        }
-
-        // check if there are any services that closed
-        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
-        oldServices.forEach {
-            serviceCache.remove(it.key)
-            onServiceClose(it.value)
-        }
-    }
-
-    // service cache
-    private var serviceCache = mutableMapOf<String, Service>()
-    private val lastCacheUpdate = 0L
-    fun doCacheUpdate() {
-        // make sure can be run now
-        if (!this::consul.isInitialized) return
-        if (System.currentTimeMillis() - lastCacheUpdate < minCacheUpdateInterval) return
-
-        // get all services
-        val curServices = consul.agentClient().services
-
-        // check for any new services (anything in new service list that isn't in the cache)
-        val newServices = curServices.filter { !serviceCache.contains(it.key) }
-        newServices.forEach {
-            serviceCache[it.key] = it.value
-            onServiceOpen(it.value)
-        }
-
-        // check if there are any services that closed
-        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
-        oldServices.forEach {
-            serviceCache.remove(it.key)
-            onServiceClose(it.value)
-        }
-
-        if (debugConsulCacheThread) println("Completed service cache update, got ${curServices.size} services! Saving length is ${serviceCache.size}!")
-    }
+    val services = mutableListOf<Service>()
 
     // just start the server on this thread
     override fun run() {
@@ -97,48 +58,22 @@ class Microservice(
         setupDefaults()
         server = embeddedServer(Netty, port = config.port, module = module)
 
-        // setup health check
-        val doRegCheckEnv = System.getenv("doRegCheck")
-        val doRegCheck = if (doRegCheckEnv != null) doRegCheckEnv == "true" else config.doRegCheck
-        val check = if (doRegCheck) {
-            ImmutableRegCheck.builder()
-                .http(System.getenv("consulRefUrl") ?: config.consulRefUrl)
-                .interval("10s")
-                .deregisterCriticalServiceAfter("1m")
-                .build()
-        } else { null }
-
-        // if in docker container, auto grab own address
-        val myAddress = if (config.isRunningInsideDocker()) {
-            val hosts = File("/etc/hosts")
-            val hostLine = hosts.readLines().last().split("\\s".toRegex())
-            hostLine.first()
-        } else { null }
-
-        // setup consul
-        consul = Consul.builder().withUrl(System.getenv("consulUrl") ?: config.consulUrl).build()
-        val builder = ImmutableRegistration.builder()
-            .id(config.id)
-            .tags(config.tags)
-            .name(config.name)
-            .address(System.getenv("consulAddr") ?: myAddress ?: config.consulAddr)
-            .meta(metadata)
-            .port(config.port)
-        if (check != null) builder.addChecks(check)
-        consul.agentClient().register(builder.build())
-
         // start server
         server.start(wait = false)
         println("Created with port ${config.port}")
+
+        // if this needs to be added to the service registry, do so
+        if (config.doRegister)
+            Requester.rawRequest(config.logger, "${config.registerUrl}/add", service.toJson())
     }
 
     // get service functions
-    fun getService(uuid: String): Service? { return serviceCache[uuid] }
-    fun getServiceWithName(name: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
-    fun getServiceWithTag(tag: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
-    fun getServices(): Map<String, Service> { return serviceCache }
-    fun getServicesWithName(name: String): Map<String, Service> { return serviceCache.filter { it.value.service == name } }
-    fun getServicesWithTag(tag: String): Map<String, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
+    fun getService(uuid: UUID) = services.firstOrNull { it.id == uuid }
+    fun getServiceWithName(name: String) = services.firstOrNull { it.name == name }
+    fun getServiceWithTag(tag: String) = services.firstOrNull { it.tags.contains(tag) }
+    fun getServices(): List<Service> = services
+    fun getServicesWithName(name: String) = services.filter { it.name == name }
+    fun getServicesWithTag(tag: String) = services.filter { it.tags.contains(tag) }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
@@ -163,6 +98,32 @@ class Microservice(
                         .put("endpoints", JSONArray().putAll(endpoints.keys))
                 )
             else result
+        }
+
+        // handle service events
+        val svcEventsCallback = endpoints["svc_event"] ?: (Schema() to { _ -> Result.Ok(JSONObject()) })
+        endpoints["svc_event"] = svcEventsCallback.first to { json ->
+            // unpack input
+            val event = ServiceEvent.valueOf(json.getString("event"))
+            val service = Service(json)
+
+            // handle event
+            when (event) {
+                // if added, add to list and add callback
+                ServiceEvent.ADDED -> {
+                    services.add(service)
+                    onServiceOpen(service)
+                }
+
+                // if removed, remove from list and call callback
+                ServiceEvent.REMOVED -> {
+                    val removed = services.remove(service)
+                    if (removed) onServiceClose(service)
+                }
+            }
+
+            // send back predefined callback result
+            svcEventsCallback.second(json)
         }
     }
 
@@ -205,8 +166,11 @@ class Microservice(
 
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
-        consul.agentClient().deregister(config.id)
-        serviceCacheThread.join(100)
+        // if was registered, remove from register
+        if (config.doRegister)
+            Requester.rawRequest(config.logger, "${config.registerUrl}/remove", service.toJson())
+
+        // do general shutdown
         server.stop(1000, 1000)
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")
     }

@@ -8,6 +8,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    maven("https://jitpack.io")
 }
 
 dependencies {
@@ -29,6 +30,8 @@ dependencies {
 
     // other modules
     implementation(project(":DaylinMicroservices-Serializables"))
+    implementation(project(":DaylinMicroservices-Core"))
+    implementation("com.github.DaylightNebula:DaylinMicroservices-Redis:0.1.1")
 
     // tests
     implementation(kotlin("test"))
