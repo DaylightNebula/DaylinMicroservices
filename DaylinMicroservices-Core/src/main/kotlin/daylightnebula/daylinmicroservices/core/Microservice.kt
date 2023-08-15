@@ -103,8 +103,8 @@ class Microservice(
         val check = if (doRegCheck) {
             ImmutableRegCheck.builder()
                 .http(System.getenv("consulRefUrl") ?: config.consulRefUrl)
-                .interval("1s")
-                .deregisterCriticalServiceAfter("100ms")
+                .interval("10s")
+                .deregisterCriticalServiceAfter("1m")
                 .build()
         } else { null }
 
