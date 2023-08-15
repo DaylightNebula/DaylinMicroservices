@@ -13,15 +13,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 val svc1Config = MicroserviceConfig(
-    "svc1",
-    "svc1",
-    listOf()
+    name = "svc1",
+    registerUpdateInterval = "10s"
 )
 
 val svc2Config = MicroserviceConfig(
-    "svc2",
-    "svc2",
-    listOf()
+    name = "svc2",
+    registerUpdateInterval = "10s"
 )
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -31,13 +29,20 @@ class Tests {
         val (svc1, svc2) = startTestServices()
 
         assertTrue {
-            val request = svc1.requestByName("svc2", "test", JSONObject().put("info", "hi"))
+            svc1.services.size > 0
+        }
+
+        assertTrue {
+            val request = svc1.requestByName("svc2", "test", JSONObject().put("info", "hi"))?.get()
             println("Request: $request")
-            if (request != null) {
-                val response = request.get().unwrap()
+            if (request != null && request.isOk()) {
+                val response = request.unwrap()
                 println("RESPONSE: " + response.toString(4))
                 response.getString("info") == "hi"
-            } else false
+            } else {
+                if (request != null) println("Request failed with error ${request.error()}")
+                false
+            }
         }
 
         svc1.dispose()
@@ -83,7 +88,7 @@ class Tests {
         svc1.start()
         svc2.start()
 
-        sleep(1000)
+        sleep(5000)
 
         return svc1 to svc2
     }

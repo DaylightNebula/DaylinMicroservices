@@ -14,6 +14,7 @@ import org.json.JSONObject
 import java.io.File
 import java.net.InetAddress
 import java.util.*
+import java.util.concurrent.TimeUnit
 import kotlin.collections.HashMap
 import kotlin.time.Duration
 
@@ -21,11 +22,11 @@ class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
     private val metadata: Map<String, String> = mapOf(),
-    private val debugRequests: Boolean = false,
-    private val debugConsulCacheThread: Boolean = false,
-    private val minCacheUpdateInterval: Long = 1000L,
     internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
-        "${System.getenv("requestAddr") ?: service.address}/$endpoint"
+        var defaultAddress = service.address
+        if (defaultAddress.contains("localhost") && isRunningInsideDocker())
+            defaultAddress = defaultAddress.replace("localhost", "host.docker.internal")
+        "${System.getenv("requestAddr") ?: defaultAddress}/$endpoint"
     },
 
     // callbacks for when a service starts and closes
@@ -62,23 +63,25 @@ class Microservice(
         println("Created with port ${config.port}")
 
         // if this needs to be added to the service registry, do so
-        if (config.doRegister)
-            Requester.rawRequest(config.logger, "${config.registerUrl}/add", service.toJson()).whenComplete { result, _ ->
-                when (result) {
-                    is Result.Error -> config.logger.error("Service add failed with error: ${result.error()}")
-                    is Result.Ok -> {
-                        services.clear()
-                        services.addAll(result.unwrap().getJSONArray("services").map { Service(it as JSONObject) })
+        if (config.doRegister) {
+            Requester.rawRequest(config.logger, "${config.registerUrl}/add", service.toJson())
+                .whenComplete { result, _ ->
+                    when (result) {
+                        is Result.Error -> config.logger.error("Service add failed with error: ${result.error()}")
+                        is Result.Ok -> {
+                            services.clear()
+                            services.addAll(result.unwrap().getJSONArray("services").map { Service(it as JSONObject) })
+                        }
                     }
                 }
-            }
+        }
     }
 
     // get service functions
     fun getService(uuid: UUID) = services.firstOrNull { it.id == uuid }
     fun getServiceWithName(name: String) = services.firstOrNull { it.name == name }
     fun getServiceWithTag(tag: String) = services.firstOrNull { it.tags.contains(tag) }
-    fun getServices(): List<Service> = services
+//    fun getServices(): List<Service> = services
     fun getServicesWithName(name: String) = services.filter { it.name == name }
     fun getServicesWithTag(tag: String) = services.filter { it.tags.contains(tag) }
 
@@ -112,7 +115,7 @@ class Microservice(
         endpoints["svc_event"] = svcEventsCallback.first to { json ->
             // unpack input
             val event = ServiceEvent.valueOf(json.getString("event"))
-            val service = Service(json)
+            val service = Service(json.getJSONObject("service"))
 
             // handle event
             when (event) {
@@ -174,8 +177,12 @@ class Microservice(
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
         // if was registered, remove from register
-        if (config.doRegister)
-            Requester.rawRequest(config.logger, "${config.registerUrl}/remove", service.toJson())
+        if (config.doRegister) {
+            val result = Requester.rawRequest(config.logger, "${config.registerUrl}/remove", service.toJson())
+                .get(1000, TimeUnit.MILLISECONDS)
+            if (result.isOk()) println("Removal success: ${result.unwrap()}")
+            else println("Removal fail: ${result.error()}")
+        }
 
         // do general shutdown
         server.stop(1000, 1000)

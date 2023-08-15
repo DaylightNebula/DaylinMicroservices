@@ -2,7 +2,6 @@ package daylightnebula.daylinmicroservices.register
 
 import daylightnebula.daylinmicroservices.core.*
 import daylightnebula.daylinmicroservices.core.requests.request
-import daylightnebula.daylinmicroservices.redis.redisTable
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import mu.KotlinLogging
@@ -11,11 +10,13 @@ import org.json.JSONObject
 import java.util.*
 import kotlin.concurrent.thread
 
+val serviceTable = mutableListOf<ServiceEntry>()
 val logger = KotlinLogging.logger("Service Register")
 
 // setup config for the microservice
 val config = MicroserviceConfig(
     name = "SVC-REGISTER",
+    port = System.getenv("port")?.toIntOrNull() ?: 2999,
     doRegister = false
 )
 
@@ -26,7 +27,7 @@ val service = Microservice(
         // return all currently registered services
         endpoint("get", Schema()) { json ->
             // respond with a list of all active services
-            Result.Ok(JSONObject().put("services", JSONArray().putAll(getAllServices().map { it.toJson() })))
+            Result.Ok(JSONObject().put("services", JSONArray().putAll(serviceTable.map { it.service.toJson() })))
         },
 
         // add a service
@@ -35,13 +36,13 @@ val service = Microservice(
             addService(Service(json))
 
             // respond with all active services
-            Result.Ok(JSONObject().put("services", JSONArray().putAll(getAllServices().map { it.toJson() })))
+            Result.Ok(JSONObject().put("services", JSONArray().putAll(serviceTable.map { it.service.toJson() })))
         },
 
         // remove a service
         endpoint("remove", Schema()) {
             val service = Service(it)
-            val entry = services.queryAll { it.service == service }.firstOrNull()
+            val entry = serviceTable.filter { entry -> entry.service.id == service.id }.firstOrNull()
             if (entry != null) {
                 removeService(entry)
                 Result.Ok(JSONObject())
@@ -50,18 +51,15 @@ val service = Microservice(
     )
 )
 
-fun getAllServices(): List<Service> = service.getServices()
+fun getAllServices(): List<Service> = service.services
 
 // create looping thread for updating services and waiting listeners
 val checkAliveThread = loopingThread(1000) {
-    // make sure tables initialized
-    if (!tablesInitialized) return@loopingThread
-
     // get current time
     val currentTime = System.currentTimeMillis()
 
     // ping all services if they need a check
-    services.getAll().forEach { entry ->
+    serviceTable.forEach { entry ->
         // if it is not this services time for a check, skip
         if (currentTime - entry.lastCheckTime < entry.updateInterval) return@forEach
 
@@ -69,7 +67,7 @@ val checkAliveThread = loopingThread(1000) {
         service.request(entry.service, "", JSONObject()).whenComplete { result, _ ->
             // if an error was returned remove it from the services
             if (result.isError()) {
-                logger.info("Service ${entry.uuid} stopped responding!")
+                logger.info("Service ${entry.service.id} stopped responding!")
                 removeService(entry)
             }
         }
@@ -78,12 +76,11 @@ val checkAliveThread = loopingThread(1000) {
 
 fun addService(newService: Service) {
     // create service entry
-    val entry = ServiceEntry(UUID.randomUUID(), newService, newService.updateInterval, System.currentTimeMillis())
+    val entry = ServiceEntry(newService, newService.updateInterval, System.currentTimeMillis())
 
     // add entry
     service.services.add(newService)
-    services.insertOrUpdate(entry)
-
+    serviceTable.add(entry)
     logger.info("Added service $newService")
 
     // broadcast event
@@ -92,7 +89,7 @@ fun addService(newService: Service) {
 
 fun removeService(old: ServiceEntry) {
     service.services.remove(old.service)
-    services.remove(old.service.id)
+    serviceTable.remove(old)
     logger.info("Removing service ${old.service}")
     sendEventToListeners(old, ServiceEvent.REMOVED)
 }
@@ -111,4 +108,6 @@ fun main() {
     Runtime.getRuntime().addShutdownHook(thread (start = false) {
         checkAliveThread.join(100)
     })
+
+    logger.info("Started service register!")
 }

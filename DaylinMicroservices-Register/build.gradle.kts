@@ -31,7 +31,6 @@ dependencies {
     // other modules
     implementation(project(":DaylinMicroservices-Serializables"))
     implementation(project(":DaylinMicroservices-Core"))
-    implementation("com.github.DaylightNebula:DaylinMicroservices-Redis:0.1.1")
 
     // tests
     implementation(kotlin("test"))
@@ -43,4 +42,13 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
+}
+
+tasks.jar {
+    manifest.attributes["Main-Class"] = "daylightnebula.daylinmicroservices.register.RegisterKt"
+}
+
+task<Exec>("Docker Build") {
+    dependsOn("shadowJar")
+    commandLine("docker build . -t daylinmicroservices/register".split(" "))
 }

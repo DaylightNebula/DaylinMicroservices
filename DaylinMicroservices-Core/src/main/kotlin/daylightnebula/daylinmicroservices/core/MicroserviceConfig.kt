@@ -17,7 +17,8 @@ import java.util.function.Predicate
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
-    val id: UUID = UUID.fromString(System.getenv("id")) ?: UUID.randomUUID(),             // the id of the microservice
+    val id: UUID = if (System.getenv("id") != null)
+        UUID.fromString(System.getenv("id")) else UUID.randomUUID(),                      // the id of the microservice
     val name: String = System.getenv("name") ?: "unnamed",                                // the name of the microservice
     val tags: List<String> = System.getenv("tags")?.split(",") ?: listOf(),    // the tags of the microservice, like what its type is
     var port: Int = System.getenv("port")?.toInt() ?: 0,                                  // the port that this service will run on
@@ -61,7 +62,7 @@ data class MicroserviceConfig(
     }
 }
 
-fun defaultRegisterUrl() = if (isRunningInsideDocker()) "http://host.docker.internal:2999/" else "http://localhost:2999/"
+fun defaultRegisterUrl() = "http://host.docker.internal:2999/"
 
 // function that checks if this process is running in a docker container
 fun isRunningInsideDocker(): Boolean {
