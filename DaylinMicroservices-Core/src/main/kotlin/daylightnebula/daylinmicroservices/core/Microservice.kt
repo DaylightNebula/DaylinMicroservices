@@ -44,6 +44,24 @@ class Microservice(
     // server stuff
     private lateinit var server: NettyApplicationEngine
     private lateinit var consul: Consul
+    private val serviceCacheThread = loopingThread(1000) {
+        if (!this::consul.isInitialized) return@loopingThread
+        val curServices = consul.agentClient().services
+
+        // check for any new services (anything in new service list that isn't in the cache)
+        val newServices = curServices.filter { !serviceCache.contains(it.key) }
+        newServices.forEach {
+            serviceCache[it.key] = it.value
+            onServiceOpen(it.value)
+        }
+
+        // check if there are any services that closed
+        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
+        oldServices.forEach {
+            serviceCache.remove(it.key)
+            onServiceClose(it.value)
+        }
+    }
 
     // service cache
     private var serviceCache = mutableMapOf<String, Service>()
@@ -115,20 +133,12 @@ class Microservice(
     }
 
     // get service functions
-    fun <T: Any> attemptTwiceWithCacheUpdate(callback: () -> T?): T? {
-        var result = callback()
-        if (result == null) {
-            doCacheUpdate()
-            result = callback()
-        }
-        return result
-    }
-    fun getService(uuid: String) = attemptTwiceWithCacheUpdate { serviceCache[uuid] }
-    fun getServiceWithName(name: String) = attemptTwiceWithCacheUpdate { serviceCache.asSequence().firstOrNull { it.value.service == name } }
-    fun getServiceWithTag(tag: String) = attemptTwiceWithCacheUpdate { serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
-    fun getServices() = serviceCache
-    fun getServicesWithName(name: String) = attemptTwiceWithCacheUpdate { serviceCache.filter { it.value.service == name } }!!
-    fun getServicesWithTag(tag: String) = attemptTwiceWithCacheUpdate { serviceCache.filter { it.value.tags.contains(tag) } }!!
+    fun getService(uuid: String): Service? { return serviceCache[uuid] }
+    fun getServiceWithName(name: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
+    fun getServiceWithTag(tag: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
+    fun getServices(): Map<String, Service> { return serviceCache }
+    fun getServicesWithName(name: String): Map<String, Service> { return serviceCache.filter { it.value.service == name } }
+    fun getServicesWithTag(tag: String): Map<String, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
@@ -196,6 +206,7 @@ class Microservice(
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
         consul.agentClient().deregister(config.id)
+        serviceCacheThread.join(100)
         server.stop(1000, 1000)
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")
     }
