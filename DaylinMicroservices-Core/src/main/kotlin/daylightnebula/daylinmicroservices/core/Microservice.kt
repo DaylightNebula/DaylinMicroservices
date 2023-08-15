@@ -32,7 +32,6 @@ class Microservice(
     private val onServiceOpen: (serv: Service) -> Unit = {},
     private val onServiceClose: (serv: Service) -> Unit = {}
 ): Thread() {
-    // TODO populate service list off of add
     // service entry for self
     val address = if (isRunningInsideDocker()) {
         val hosts = File("/etc/hosts")
@@ -64,7 +63,15 @@ class Microservice(
 
         // if this needs to be added to the service registry, do so
         if (config.doRegister)
-            Requester.rawRequest(config.logger, "${config.registerUrl}/add", service.toJson())
+            Requester.rawRequest(config.logger, "${config.registerUrl}/add", service.toJson()).whenComplete { result, _ ->
+                when (result) {
+                    is Result.Error -> config.logger.error("Service add failed with error: ${result.error()}")
+                    is Result.Ok -> {
+                        services.clear()
+                        services.addAll(result.unwrap().getJSONArray("services").map { Service(it as JSONObject) })
+                    }
+                }
+            }
     }
 
     // get service functions
