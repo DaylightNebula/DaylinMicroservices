@@ -50,7 +50,7 @@ class Microservice(
 
     // server stuff
     private lateinit var server: NettyApplicationEngine
-    val services = mutableListOf<Service>()
+    var services = mutableListOf<Service>()
 
     // just start the server on this thread
     override fun run() {
@@ -134,6 +134,16 @@ class Microservice(
 
             // send back predefined callback result
             svcEventsCallback.second(json)
+        }
+
+        // handle update services
+        val updateServices = endpoints["update_services"] ?: (Schema() to { _ -> Result.Ok(JSONObject()) })
+        endpoints["update_services"] = updateServices.first to { json ->
+            // update services
+            services = json.getJSONArray("services").map { Service(it as JSONObject) }.toMutableList()
+
+            // call predefined callback and return result
+            updateServices.second(json)
         }
     }
 

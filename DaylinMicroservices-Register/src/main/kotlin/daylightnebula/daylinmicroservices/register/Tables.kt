@@ -8,7 +8,7 @@ import java.util.*
 data class ServiceEntry(
     val service: Service,
     val updateInterval: Long,
-    val lastCheckTime: Long
+    var lastCheckTime: Long
 ) {
     constructor(json: JSONObject): this(
         Service(json),
