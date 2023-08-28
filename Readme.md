@@ -102,7 +102,7 @@ services:
       - 6379:6379
     command: redis-server
   register:
-    image: daylightnebula/daylinmicroservices-register:0.5.1
+    image: daylightnebula/daylinmicroservices-register:0.5.0
     ports:
       - 2999:2999
     environment:
