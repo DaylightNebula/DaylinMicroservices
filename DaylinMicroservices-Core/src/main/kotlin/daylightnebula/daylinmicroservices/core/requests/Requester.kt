@@ -30,7 +30,7 @@ internal object Requester {
                     parameter("json", json.toString(1))
                 })
             } catch (ex: Exception) {
-                logger.warn("Request $address failed with exception: ${ex.message}"); null
+                logger.warn("Request failed with exception: ${ex.message}"); null
             }
 
             // when request completes, call the on complete function, using try catch in case json conversion fails

@@ -4,11 +4,10 @@ import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import org.json.JSONObject
 import java.lang.Thread.sleep
-import java.util.*
 
 val service = Microservice(
     MicroserviceConfig(
-        UUID.randomUUID(),
+        "tester",
         "tester",
         listOf()
     ),
