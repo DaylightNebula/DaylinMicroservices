@@ -27,6 +27,9 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
     implementation("ch.qos.logback:logback-classic:1.4.6")
 
+    // consul
+    implementation("com.orbitz.consul:consul-client:1.5.3")
+
     // other modules
     implementation(project(":DaylinMicroservices-Serializables"))
 

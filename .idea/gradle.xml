@@ -10,7 +10,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/DaylinMicroservices-Core" />
-            <option value="$PROJECT_DIR$/DaylinMicroservices-Register" />
             <option value="$PROJECT_DIR$/DaylinMicroservices-Serializables" />
           </set>
         </option>

@@ -17,30 +17,34 @@ import java.util.function.Predicate
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
-    val id: UUID = UUID.fromString(System.getenv("id")) ?: UUID.randomUUID(),             // the id of the microservice
-    val name: String = System.getenv("name") ?: "unnamed",                                // the name of the microservice
-    val tags: List<String> = System.getenv("tags")?.split(",") ?: listOf(),    // the tags of the microservice, like what its type is
-    var port: Int = System.getenv("port")?.toInt() ?: 0,                                  // the port that this service will run on
-    var registerUrl: String = System.getenv("registerUrl") ?: defaultRegisterUrl(),       // url to the current service register
-    var doRegister: Boolean = System.getenv("doRegister")?.toBoolean() ?: true,           // determines if the register actions should be performed
-    var registerUpdateInterval: String = System.getenv("registerUpdateInterval") ?: "1m", // how often the service register should check if this service is alive
-    val logger: Logger =                                                                        // the logger that this service will write its output too
+    val id: String,                     // the id of the microservice
+    val name: String,                   // the name of the microservice
+    val tags: List<String>,             // the tags of the microservice, like what its type is
+    var port: Int = 0,                  // the port that this service will run on
+    var consulUrl: String = "",         // the url that consul is on
+    var consulRefUrl: String = "",      // this is what consul will use to reference this microservice
+    val consulAddr: String = "localhost",
+    val doRegCheck: Boolean = true,     // allow consul to periodically perform a check to see if the service is active
+    val logger: Logger =                // the logger that this service will write its output too
         KotlinLogging.logger("Microservice $name")
 ) {
     init {
         // make sure port is set
         setupPort()
+
+        // make sure consul addresses are setup
+        setupConsulUrl()
+        setupConsulRefUrl()
     }
 
     // load from a json object
     constructor(json: JSONObject): this(
-        UUID.fromString(json.optString("id", System.getenv("id") ?: "")) ?: UUID.randomUUID(),
-        json.optString("name", System.getenv("name") ?: "unnamed"),
-        json.optJSONArray("tags")?.map { it as String } ?: System.getenv("tags")?.split(",") ?: listOf(),
-        json.optInt("port", System.getenv("port")?.toInt() ?: 0),
-        json.optString("registerUrl", System.getenv("registerUrl") ?: defaultRegisterUrl()),
-        json.optBoolean("doRegister", System.getenv("doRegister")?.toBoolean() ?: true),
-        json.optString("registerUpdateInterval", System.getenv("registerUpdateInterval") ?: "1m")
+        json.optString("id", ""),
+        json.optString("name", ""),
+        json.optJSONArray("tags")?.map { it as String } ?: listOf(),
+        json.optInt("port", 0),
+        json.optString("consulUrl", ""),
+        json.optString("consulRefUrl", "")
     )
 
     // load from a json object in a file
@@ -59,21 +63,42 @@ data class MicroserviceConfig(
         sSocket.close()
         logger.info("Found open port $port")
     }
-}
 
-fun defaultRegisterUrl() = if (isRunningInsideDocker()) "http://host.docker.internal:2999/" else "http://localhost:2999/"
+    // function that sets up the consul url to defaults if necessary
+    private fun setupConsulUrl() {
+        // make sure consul url is blank
+        if (consulUrl.isNotBlank()) return
 
-// function that checks if this process is running in a docker container
-fun isRunningInsideDocker(): Boolean {
-    try {
-        Files.lines(Paths.get("/proc/1/cgroup")).use { stream ->
-            return stream.anyMatch(Predicate { line: String ->
-                line.contains(
-                    "/docker"
-                )
-            })
+        // set consul url
+        consulUrl = if (isRunningInsideDocker()) "http://host.docker.internal:8500" else "http://localhost:8500"
+    }
+
+    // function that sets the consul ref url to defaults if necessary
+    private fun setupConsulRefUrl() {
+        // make sure consul ref url is blank
+        if (consulRefUrl.isNotBlank()) return
+
+        // get my ip
+        val whatismyip = URL("http://checkip.amazonaws.com")
+        val `in` = BufferedReader(InputStreamReader(whatismyip.openStream()))
+        val ip = `in`.readLine()
+
+        // set consul ref url
+        consulRefUrl = "http://$ip:${port}/"
+    }
+
+    // function that checks if this process is running in a docker container
+    fun isRunningInsideDocker(): Boolean {
+        try {
+            Files.lines(Paths.get("/proc/1/cgroup")).use { stream ->
+                return stream.anyMatch(Predicate { line: String ->
+                    line.contains(
+                        "/docker"
+                    )
+                })
+            }
+        } catch (e: IOException) {
+            return false
         }
-    } catch (e: IOException) {
-        return false
     }
 }
