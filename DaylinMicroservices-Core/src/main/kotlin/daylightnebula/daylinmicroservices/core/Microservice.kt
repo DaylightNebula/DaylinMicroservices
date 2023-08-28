@@ -121,7 +121,7 @@ class Microservice(
             .id(config.id)
             .tags(config.tags)
             .name(config.name)
-            .address(System.getenv("consulAddr") ?: myAddress ?: config.consulAddr)
+            .address(myAddress ?: config.consulAddr)
             .meta(metadata)
             .port(config.port)
         if (check != null) builder.addChecks(check)

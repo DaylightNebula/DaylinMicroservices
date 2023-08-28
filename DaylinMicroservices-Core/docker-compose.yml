@@ -1,0 +1,40 @@
+# Test rig compose file
+version: '3.9'
+name: dmtestrig
+networks:
+  dmtestrig:
+    name: dmtestrig
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.90.0.0/24
+services:
+  consul:
+    image: consul:latest
+    ports:
+      - "8500:8500"
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.2
+  test0:
+    image: daylinmicroservices/tester
+    ports:
+      - "2000:2000"
+    environment:
+      - port=2000
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2000
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.3
+  test1:
+    image: daylinmicroservices/tester
+    ports:
+      - "2001:2001"
+    environment:
+      - port=2000
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2001
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.4

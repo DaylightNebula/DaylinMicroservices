@@ -1,5 +1,6 @@
 package daylightnebula.daylinmicroservices.core
 
+import daylightnebula.daylinmicroservices.core.requests.request
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import org.json.JSONObject
@@ -12,15 +13,21 @@ val service = Microservice(
         listOf()
     ),
     endpoints = hashMapOf(
-        "test" to (Schema() to { json ->
-            Result.Ok(JSONObject().put("test", true))
+        "ping" to (Schema() to { json ->
+            Result.Ok(JSONObject().put("ping", "pong"))
         })
     )
 )
+
+val pingThread = loopingThread(1000) {
+    service.getServices().forEach { (name, other) ->
+        service.request(other, "ping", JSONObject()).whenComplete { result, _ ->
+            if (result.isError()) println("PING FAILED WITH ERROR: ${result.error()}")
+            else println("ping success")
+        }
+    }
+}
+
 fun main(args: Array<String>) {
     service.start()
-
-    while(true) {}
-//    sleep(10000)
-//    service.dispose()
 }

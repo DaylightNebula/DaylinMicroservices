@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     id("java")
     kotlin("jvm") version "1.8.21"
@@ -43,4 +41,15 @@ tasks.getByName<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("sha
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
+}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "daylightnebula.daylinmicroservices.core.TesterKt"
+    }
+}
+
+task<Exec>("build_tester") {
+    dependsOn("shadowJar")
+    commandLine("docker", "build", ".", "-t", "daylinmicroservices/tester")
 }

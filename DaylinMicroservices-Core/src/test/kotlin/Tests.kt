@@ -50,6 +50,7 @@ class Tests {
 
         assertTrue  {
             val request = svc1.requestByName("svc2", "test", JSONObject())
+            println("Future $request")
             if (request != null) {
                 val response = request.get()
                 println("RESPONSE: ${response.serialize().toString(0)}")
@@ -83,7 +84,7 @@ class Tests {
         svc1.start()
         svc2.start()
 
-        sleep(1000)
+        sleep(5000)
 
         return svc1 to svc2
     }

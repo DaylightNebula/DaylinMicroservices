@@ -20,10 +20,13 @@ data class MicroserviceConfig(
     val id: String,                     // the id of the microservice
     val name: String,                   // the name of the microservice
     val tags: List<String>,             // the tags of the microservice, like what its type is
-    var port: Int = 0,                  // the port that this service will run on
-    var consulUrl: String = "",         // the url that consul is on
-    var consulRefUrl: String = "",      // this is what consul will use to reference this microservice
-    val consulAddr: String = "localhost",
+    var port: Int = System.getenv("port")?.toIntOrNull() ?: 0,
+        // the port that this service will run on
+    var consulUrl: String = System.getenv("consulUrl") ?: "",
+        // the url that consul is on
+    var consulRefUrl: String = System.getenv("consulRefUrl") ?: "",
+        // this is what consul will use to reference this microservice
+    val consulAddr: String = System.getenv("consulAddr") ?: "localhost",
     val doRegCheck: Boolean = true,     // allow consul to periodically perform a check to see if the service is active
     val logger: Logger =                // the logger that this service will write its output too
         KotlinLogging.logger("Microservice $name")
