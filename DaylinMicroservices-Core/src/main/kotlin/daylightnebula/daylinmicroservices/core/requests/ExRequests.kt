@@ -1,9 +1,10 @@
 package daylightnebula.daylinmicroservices.core.requests
 
-import com.orbitz.consul.model.health.Service
 import daylightnebula.daylinmicroservices.core.Microservice
+import daylightnebula.daylinmicroservices.core.ServiceInfo
 import daylightnebula.daylinmicroservices.serializables.Result
 import org.json.JSONObject
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -13,20 +14,20 @@ fun Microservice.request(address: String, json: JSONObject): CompletableFuture<R
     return Requester.rawRequest(this.config.logger, address, json)
         .completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
-fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
+fun Microservice.request(service: ServiceInfo, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
     return request(this.mapRequestAddress(service, endpoint), json)
 }
-fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
+fun Microservice.requestByUUID(uuid: UUID, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val service = getService(uuid) ?: return null
     return request(service, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.requestByName(name: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val serviceEntry = getServiceWithName(name) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
+    return request(serviceEntry, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.requestByTag(tag: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val serviceEntry = getServiceWithTag(tag) ?: return null
-    return request(serviceEntry.value, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
+    return request(serviceEntry, endpoint, json).completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 
 // broadcast to services
@@ -42,9 +43,9 @@ fun Microservice.broadcastRequestByTag(tag: String, endpoint: String, json: JSON
 // pipe request
 fun Microservice.pipe(address: String, json: JSONObject): Result<JSONObject>
     = request(address, json).get()
-fun Microservice.pipe(service: Service, endpoint: String, json: JSONObject): Result<JSONObject>
+fun Microservice.pipe(service: ServiceInfo, endpoint: String, json: JSONObject): Result<JSONObject>
     = request(service, endpoint, json).get()
-fun Microservice.pipeByUUID(uuid: String, endpoint: String, json: JSONObject): Result<JSONObject>
+fun Microservice.pipeByUUID(uuid: UUID, endpoint: String, json: JSONObject): Result<JSONObject>
     = requestByUUID(uuid, endpoint, json)?.get() ?: Result.Error("No service with uuid $uuid found")
 fun Microservice.pipeByName(name: String, endpoint: String, json: JSONObject): Result<JSONObject>
     = requestByName(name, endpoint, json)?.get() ?: Result.Error("No service with name $name found")

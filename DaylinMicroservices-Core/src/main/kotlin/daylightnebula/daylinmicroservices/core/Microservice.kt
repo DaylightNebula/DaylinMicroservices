@@ -1,11 +1,5 @@
 package daylightnebula.daylinmicroservices.core
 
-import com.orbitz.consul.Consul
-import com.orbitz.consul.model.agent.ImmutableRegCheck
-import com.orbitz.consul.model.agent.ImmutableRegistration
-import com.orbitz.consul.model.agent.Registration.RegCheck
-import com.orbitz.consul.model.health.Service
-import daylightnebula.daylinmicroservices.core.requests.Requester
 import daylightnebula.daylinmicroservices.core.requests.request
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
@@ -25,49 +19,59 @@ import kotlin.collections.HashMap
 class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
-    private val metadata: Map<String, String> = mapOf(),
-
     private val debugRequests: Boolean = false,
-    private val debugConsulCacheThread: Boolean = false,
-    private val minCacheUpdateInterval: Long = 1000L,
     private val doRegister: Boolean = true,
 
-    internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
-        var targetAddress = System.getenv("requestAddr") ?: service.address
-        if (debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint")
-        if (targetAddress == "localhost" && config.isRunningInsideDocker()) targetAddress = "host.docker.internal"
-        "http://${targetAddress}:${service.port}/$endpoint"
+    internal val mapRequestAddress: (serv: ServiceInfo, endpoint: String) -> String = { service, endpoint ->
+        if (debugRequests) println("Docker? ${config.isRunningInsideDocker()}, address: ${service.address}, endpoint $endpoint")
+        "${service.address}/$endpoint"
     },
 
     // callbacks for when a service starts and closes
-    private val onServiceOpen: (serv: Service) -> Unit = {},
-    private val onServiceClose: (serv: Service) -> Unit = {}
+    private val onServiceOpen: (serv: ServiceInfo) -> Unit = {},
+    private val onServiceClose: (serv: ServiceInfo) -> Unit = {}
 ): Thread() {
 
     // server stuff
     private lateinit var server: NettyApplicationEngine
     private val registerUrl = System.getenv("registerUrl") ?: "http://172.90.0.3:2999"
     private lateinit var myServiceInfo: ServiceInfo
-    private lateinit var consul: Consul
 
     // service cache
-    private var serviceCache = mutableMapOf<String, Service>()
+    private lateinit var serviceCache: MutableMap<UUID, ServiceInfo>
     private val serviceCacheThread = if (doRegister) loopingThread(1000) {
-        if (!this::consul.isInitialized) return@loopingThread
-        val curServices = consul.agentClient().services
+        if (!this::myServiceInfo.isInitialized) return@loopingThread
 
-        // check for any new services (anything in new service list that isn't in the cache)
-        val newServices = curServices.filter { !serviceCache.contains(it.key) }
-        newServices.forEach {
-            serviceCache[it.key] = it.value
-            onServiceOpen(it.value)
-        }
+        // send get request to register
+        request("$registerUrl/get", JSONObject()).whenComplete { result, _ ->
+            // if result is ok, process it, otherwise, log error
+            if (result.isOk()) {
+                // get current services map
+                val curServices = result.unwrap().getJSONArray("services").map {
+                    val info = ServiceInfo(it as JSONObject)
+                    info.id to info
+                }.toMap()
 
-        // check if there are any services that closed
-        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
-        oldServices.forEach {
-            serviceCache.remove(it.key)
-            onServiceClose(it.value)
+                // if service cache is not initialized, initialize with current services
+                if (!this::serviceCache.isInitialized) {
+                    serviceCache = curServices.toMutableMap()
+                    return@whenComplete
+                }
+
+                // check for any new services (anything in new service list that isn't in the cache)
+                val newServices = curServices.filter { !serviceCache.contains(it.key) }
+                newServices.forEach {
+                    serviceCache[it.key] = it.value
+                    onServiceOpen(it.value)
+                }
+
+                // check if there are any services that closed
+                val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
+                oldServices.forEach {
+                    serviceCache.remove(it.key)
+                    onServiceClose(it.value)
+                }
+            } else config.logger.error("Register get request failed with error: ${result.error()}")
         }
     } else null
 
@@ -93,10 +97,31 @@ class Microservice(
         )
 
         // register if necessary
-        if (doRegister) request(
-            "$registerUrl/add",
-            myServiceInfo.toJson()
-        )
+        if (doRegister) {
+            // send add request
+            request(
+                "$registerUrl/add",
+                myServiceInfo.toJson()
+            ).whenComplete { result, _ ->
+                // if add request succeeded, send first service get request
+                if (result.isOk()) request(
+                    "$registerUrl/get",
+                    JSONObject()
+                ).whenComplete { result, _ ->
+                    // if the first get request passed, initialize service cache with the results
+                    if (result.isOk()) {
+                        serviceCache = result.unwrap().getJSONArray("services").map {
+                            val info = ServiceInfo(it as JSONObject)
+                            info.id to info
+                        }.toMap().toMutableMap()
+                    }
+                    // otherwise, log error
+                    else config.logger.error("First service cache get request failed with error: ${result.error()}")
+                }
+                // otherwise, log error
+                else config.logger.error("Failed to register self with error: ${result.error()}")
+            }
+        }
 
         // start server
         server.start(wait = false)
@@ -104,12 +129,17 @@ class Microservice(
     }
 
     // get service functions
-    fun getService(uuid: String): Service? { return serviceCache[uuid] }
-    fun getServiceWithName(name: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.service == name } }
-    fun getServiceWithTag(tag: String): Map.Entry<String, Service>? { return serviceCache.asSequence().firstOrNull { it.value.tags.contains(tag) } }
-    fun getServices(): Map<String, Service> { return serviceCache }
-    fun getServicesWithName(name: String): Map<String, Service> { return serviceCache.filter { it.value.service == name } }
-    fun getServicesWithTag(tag: String): Map<String, Service> { return serviceCache.filter { it.value.tags.contains(tag) } }
+    fun getService(uuid: UUID): ServiceInfo? = safeCache { it[uuid] }
+    fun getServiceWithName(name: String): ServiceInfo? = safeCache { c -> c.asSequence().firstOrNull { it.value.name == name }?.value }
+    fun getServiceWithTag(tag: String): ServiceInfo? = safeCache { c -> c.asSequence().firstOrNull { it.value.tags.contains(tag) }?.value }
+    fun getServices(): Map<UUID, ServiceInfo> = safeCache()
+    fun getServicesWithName(name: String): Map<UUID, ServiceInfo> = safeCache { c -> c.filter { it.value.name == name } }
+    fun getServicesWithTag(tag: String): Map<UUID, ServiceInfo> = safeCache { c -> c.filter { it.value.tags.contains(tag) } }
+
+    // get helper functions
+    fun <T: Any?> safeCache(callback: (cache: Map<UUID, ServiceInfo>) -> T): T =
+        callback(safeCache())
+    fun safeCache(): Map<UUID, ServiceInfo> = if (this::serviceCache.isInitialized) serviceCache else mapOf()
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {

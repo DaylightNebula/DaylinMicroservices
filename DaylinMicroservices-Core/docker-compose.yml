@@ -9,13 +9,6 @@ networks:
       config:
         - subnet: 172.90.0.0/24
 services:
-#  consul:
-#    image: consul:latest
-#    ports:
-#      - "8500:8500"
-#    networks:
-#      dmtestrig:
-#        ipv4_address: 172.90.0.2
   register:
     image: daylinmicroservices/register
     ports:
@@ -53,3 +46,325 @@ services:
     networks:
       dmtestrig:
         ipv4_address: 172.90.0.5
+  test2:
+    image: daylinmicroservices/tester
+    ports:
+      - "2002:2002"
+    depends_on:
+      - register
+    environment:
+      - port=2002
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2002
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.6
+  test3:
+    image: daylinmicroservices/tester
+    ports:
+      - "2003:2003"
+    depends_on:
+      - register
+    environment:
+      - port=2003
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2003
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.7
+  test4:
+    image: daylinmicroservices/tester
+    ports:
+      - "2004:2004"
+    depends_on:
+      - register
+    environment:
+      - port=2004
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2004
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.8
+  test5:
+    image: daylinmicroservices/tester
+    ports:
+      - "2005:2005"
+    depends_on:
+      - register
+    environment:
+      - port=2005
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2005
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.9
+  test6:
+    image: daylinmicroservices/tester
+    ports:
+      - "2006:2006"
+    depends_on:
+      - register
+    environment:
+      - port=2006
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2006
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.10
+  test7:
+    image: daylinmicroservices/tester
+    ports:
+      - "2007:2007"
+    depends_on:
+      - register
+    environment:
+      - port=2007
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2007
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.11
+  test8:
+    image: daylinmicroservices/tester
+    ports:
+      - "2008:2008"
+    depends_on:
+      - register
+    environment:
+      - port=2008
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2008
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.12
+  test9:
+    image: daylinmicroservices/tester
+    ports:
+      - "2009:2009"
+    depends_on:
+      - register
+    environment:
+      - port=2009
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2009
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.13
+  test10:
+    image: daylinmicroservices/tester
+    ports:
+      - "2010:2010"
+    depends_on:
+      - register
+    environment:
+      - port=2010
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2010
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.14
+  test11:
+    image: daylinmicroservices/tester
+    ports:
+      - "2011:2011"
+    depends_on:
+      - register
+    environment:
+      - port=2011
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2011
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.15
+  test12:
+    image: daylinmicroservices/tester
+    ports:
+      - "2012:2012"
+    depends_on:
+      - register
+    environment:
+      - port=2012
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2012
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.16
+  test13:
+    image: daylinmicroservices/tester
+    ports:
+      - "2013:2013"
+    depends_on:
+      - register
+    environment:
+      - port=2013
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2013
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.17
+  test14:
+    image: daylinmicroservices/tester
+    ports:
+      - "2014:2014"
+    depends_on:
+      - register
+    environment:
+      - port=2014
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2014
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.18
+  test15:
+    image: daylinmicroservices/tester
+    ports:
+      - "2015:2015"
+    depends_on:
+      - register
+    environment:
+      - port=2015
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2015
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.19
+  test16:
+    image: daylinmicroservices/tester
+    ports:
+      - "2016:2016"
+    depends_on:
+      - register
+    environment:
+      - port=2016
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2016
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.20
+  test17:
+    image: daylinmicroservices/tester
+    ports:
+      - "2017:2017"
+    depends_on:
+      - register
+    environment:
+      - port=2017
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2017
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.21
+  test18:
+    image: daylinmicroservices/tester
+    ports:
+      - "2018:2018"
+    depends_on:
+      - register
+    environment:
+      - port=2018
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2018
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.22
+  test19:
+    image: daylinmicroservices/tester
+    ports:
+      - "2019:2019"
+    depends_on:
+      - register
+    environment:
+      - port=2019
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2019
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.23
+  test20:
+    image: daylinmicroservices/tester
+    ports:
+      - "2020:2020"
+    depends_on:
+      - register
+    environment:
+      - port=2020
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2020
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.24
+  test21:
+    image: daylinmicroservices/tester
+    ports:
+      - "2021:2021"
+    depends_on:
+      - register
+    environment:
+      - port=2021
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2021
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.25
+  test22:
+    image: daylinmicroservices/tester
+    ports:
+      - "2022:2022"
+    depends_on:
+      - register
+    environment:
+      - port=2022
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2022
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.26
+  test23:
+    image: daylinmicroservices/tester
+    ports:
+      - "2023:2023"
+    depends_on:
+      - register
+    environment:
+      - port=2023
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2023
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.27
+  test24:
+    image: daylinmicroservices/tester
+    ports:
+      - "2024:2024"
+    depends_on:
+      - register
+    environment:
+      - port=2024
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:2024
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.28

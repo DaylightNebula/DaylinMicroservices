@@ -24,7 +24,7 @@ val pingThread = loopingThread(1000) {
     service.getServices().forEach { (name, other) ->
         service.request(other, "ping", JSONObject()).whenComplete { result, _ ->
             if (result.isError()) println("PING FAILED WITH ERROR: ${result.error()}")
-            else println("ping success")
+//            else println("ping success")
         }
     }
 }

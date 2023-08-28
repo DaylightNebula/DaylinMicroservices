@@ -1,0 +1,20 @@
+# Test rig compose file
+version: '3.9'
+name: dmtestrig
+networks:
+  dmtestrig:
+    name: dmtestrig
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.90.0.0/24
+services:
+  register:
+    image: daylinmicroservices/register
+    ports:
+      - "2999:2999"
+    environment:
+      - port=2999
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.3

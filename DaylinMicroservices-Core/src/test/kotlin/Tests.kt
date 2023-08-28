@@ -9,17 +9,18 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.lang.Thread.sleep
+import java.util.*
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 val svc1Config = MicroserviceConfig(
-    "svc1",
+    UUID.randomUUID(),
     "svc1",
     listOf()
 )
 
 val svc2Config = MicroserviceConfig(
-    "svc2",
+    UUID.randomUUID(),
     "svc2",
     listOf()
 )

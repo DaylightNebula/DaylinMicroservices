@@ -1,0 +1,14 @@
+  test{index}:
+    image: daylinmicroservices/tester
+    ports:
+      - "{port_index}:{port_index}"
+    depends_on:
+      - register
+    environment:
+      - port={port_index}
+      - registerUrl=http://172.90.0.3:2999
+      - consulUrl=http://172.90.0.2:8500
+      - consulRefUrl=http://172.90.0.5:{port_index}
+    networks:
+      dmtestrig:
+        ipv4_address: 172.90.0.{ip_index}
