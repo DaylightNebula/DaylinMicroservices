@@ -30,8 +30,7 @@ val service = Microservice(
         // return all currently registered services
         endpoint("get", Schema()) { json ->
             // respond with a list of all active services
-            val jsonArr = synchronized(serviceTable) { serviceTable.map { it.service.toJson() } }
-            Result.Ok(JSONObject().put("services", JSONArray().putAll(jsonArr)))
+            Result.Ok(JSONObject().put("services", JSONArray().putAll(serviceTable.map { it.service.toJson() })))
         },
 
         // add a service
@@ -40,14 +39,13 @@ val service = Microservice(
             addService(Service(json))
 
             // respond with all active services
-            val jsonArr = synchronized(serviceTable) { serviceTable.map { it.service.toJson() } }
-            Result.Ok(JSONObject().put("services", JSONArray().putAll(jsonArr)))
+            Result.Ok(JSONObject().put("services", JSONArray().putAll(serviceTable.map { it.service.toJson() })))
         },
 
         // remove a service
         endpoint("remove", Schema()) {
             val service = Service(it)
-            val entry = synchronized(serviceTable) { serviceTable.filter { entry -> entry.service.id == service.id }.firstOrNull() }
+            val entry = serviceTable.filter { entry -> entry.service.id == service.id }.firstOrNull()
             if (entry != null) {
                 removeService(entry)
                 Result.Ok(JSONObject())
@@ -64,28 +62,23 @@ val checkAliveThread = loopingThread(1000) {
     val currentTime = System.currentTimeMillis()
 
     // ping all services if they need a check
-    synchronized(serviceTable) {
-        serviceTable.forEach { entry ->
-            // if it is not this services time for a check, skip
-            if (currentTime - entry.lastCheckTime < entry.updateInterval) return@forEach
-            entry.lastCheckTime = System.currentTimeMillis()
+    serviceTable.forEach { entry ->
+        // if it is not this services time for a check, skip
+        if (currentTime - entry.lastCheckTime < entry.updateInterval) return@forEach
 
-            // send request to the service
-            val json = JSONObject().put("services", JSONArray().putAll(serviceTable.map { it.toJson() }))
-            service.request(entry.service, "update_services", json).whenComplete { result, _ ->
-                // if an error was returned remove it from the services
-                if (result.isError()) {
-                    logger.info("Service ${entry.service.id} stopped responding!")
-                    removeService(entry)
-                }
+        // send request to the service
+        service.request(entry.service, "", JSONObject()).whenComplete { result, _ ->
+            // if an error was returned remove it from the services
+            if (result.isError()) {
+                logger.info("Service ${entry.service.id} stopped responding!")
+                removeService(entry)
             }
         }
     }
 
     // if a change the service table changed, update redis if initialized
     if (changeOccurred && ::redisSave.isInitialized) {
-        val jsonArr = synchronized(serviceTable) { serviceTable.map { it.toJson() } }
-        redisSave.set(JSONArray().putAll(jsonArr))
+        redisSave.set(JSONArray().putAll(serviceTable.map { it.toJson() }))
         changeOccurred = false
     }
 }
@@ -107,7 +100,7 @@ fun addService(newService: Service) {
 
 fun removeService(old: ServiceEntry) {
     service.services.remove(old.service)
-    synchronized(serviceTable) { serviceTable.remove(old) }
+    serviceTable.remove(old)
     logger.info("Removing service ${old.service}")
     sendEventToListeners(old, ServiceEvent.REMOVED)
     changeOccurred = true
@@ -127,10 +120,8 @@ fun main() {
         redisSave = RedisJSONArray("_dm_services", JSONArray())
 
         // update table from redis
-        synchronized(serviceTable) {
-            serviceTable.clear()
-            serviceTable.addAll(redisSave.get().map { ServiceEntry(it as JSONObject) })
-        }
+        serviceTable.clear()
+        serviceTable.addAll(redisSave.get().map { ServiceEntry(it as JSONObject) })
     }
 
     // start service
