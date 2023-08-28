@@ -8,13 +8,13 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 // make request to services
-fun Microservice.request(address: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
+fun Microservice.request(address: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
     json.put("broadcast", false)
     return Requester.rawRequest(this.config.logger, address, json)
         .completeOnTimeout(Result.Error<JSONObject>("Timeout"), 5, TimeUnit.SECONDS)
 }
 fun Microservice.request(service: Service, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>> {
-    return request(this.mapRequestAddress(service, endpoint), endpoint, json)
+    return request(this.mapRequestAddress(service, endpoint), json)
 }
 fun Microservice.requestByUUID(uuid: String, endpoint: String, json: JSONObject): CompletableFuture<Result<JSONObject>>? {
     val service = getService(uuid) ?: return null
@@ -40,8 +40,8 @@ fun Microservice.broadcastRequestByTag(tag: String, endpoint: String, json: JSON
 }
 
 // pipe request
-fun Microservice.pipe(address: String, endpoint: String, json: JSONObject): Result<JSONObject>
-    = request(address, endpoint, json).get()
+fun Microservice.pipe(address: String, json: JSONObject): Result<JSONObject>
+    = request(address, json).get()
 fun Microservice.pipe(service: Service, endpoint: String, json: JSONObject): Result<JSONObject>
     = request(service, endpoint, json).get()
 fun Microservice.pipeByUUID(uuid: String, endpoint: String, json: JSONObject): Result<JSONObject>

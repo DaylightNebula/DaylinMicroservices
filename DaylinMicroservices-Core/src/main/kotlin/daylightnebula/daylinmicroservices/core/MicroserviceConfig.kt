@@ -17,7 +17,7 @@ import java.util.function.Predicate
 
 // just a basic config that can load from json or file
 data class MicroserviceConfig(
-    val id: String,                     // the id of the microservice
+    val id: UUID,                     // the id of the microservice
     val name: String,                   // the name of the microservice
     val tags: List<String>,             // the tags of the microservice, like what its type is
     var port: Int = System.getenv("port")?.toIntOrNull() ?: 0,
@@ -42,7 +42,7 @@ data class MicroserviceConfig(
 
     // load from a json object
     constructor(json: JSONObject): this(
-        json.optString("id", ""),
+        UUID.fromString(json.optString("id", "")),
         json.optString("name", ""),
         json.optJSONArray("tags")?.map { it as String } ?: listOf(),
         json.optInt("port", 0),

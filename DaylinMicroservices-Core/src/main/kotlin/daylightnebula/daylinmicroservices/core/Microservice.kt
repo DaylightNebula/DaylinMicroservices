@@ -26,9 +26,12 @@ class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
     private val metadata: Map<String, String> = mapOf(),
+
     private val debugRequests: Boolean = false,
     private val debugConsulCacheThread: Boolean = false,
     private val minCacheUpdateInterval: Long = 1000L,
+    private val doRegister: Boolean = true,
+
     internal val mapRequestAddress: (serv: Service, endpoint: String) -> String = { service, endpoint ->
         var targetAddress = System.getenv("requestAddr") ?: service.address
         if (debugRequests) println("Making request too $targetAddress, docker? ${config.isRunningInsideDocker()}, port: ${service.port}, endpoint $endpoint")
@@ -43,8 +46,13 @@ class Microservice(
 
     // server stuff
     private lateinit var server: NettyApplicationEngine
+    private val registerUrl = System.getenv("registerUrl") ?: "http://172.90.0.3:2999"
+    private lateinit var myServiceInfo: ServiceInfo
     private lateinit var consul: Consul
-    private val serviceCacheThread = loopingThread(1000) {
+
+    // service cache
+    private var serviceCache = mutableMapOf<String, Service>()
+    private val serviceCacheThread = if (doRegister) loopingThread(1000) {
         if (!this::consul.isInitialized) return@loopingThread
         val curServices = consul.agentClient().services
 
@@ -61,35 +69,7 @@ class Microservice(
             serviceCache.remove(it.key)
             onServiceClose(it.value)
         }
-    }
-
-    // service cache
-    private var serviceCache = mutableMapOf<String, Service>()
-    private val lastCacheUpdate = 0L
-    fun doCacheUpdate() {
-        // make sure can be run now
-        if (!this::consul.isInitialized) return
-        if (System.currentTimeMillis() - lastCacheUpdate < minCacheUpdateInterval) return
-
-        // get all services
-        val curServices = consul.agentClient().services
-
-        // check for any new services (anything in new service list that isn't in the cache)
-        val newServices = curServices.filter { !serviceCache.contains(it.key) }
-        newServices.forEach {
-            serviceCache[it.key] = it.value
-            onServiceOpen(it.value)
-        }
-
-        // check if there are any services that closed
-        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
-        oldServices.forEach {
-            serviceCache.remove(it.key)
-            onServiceClose(it.value)
-        }
-
-        if (debugConsulCacheThread) println("Completed service cache update, got ${curServices.size} services! Saving length is ${serviceCache.size}!")
-    }
+    } else null
 
     // just start the server on this thread
     override fun run() {
@@ -97,35 +77,26 @@ class Microservice(
         setupDefaults()
         server = embeddedServer(Netty, port = config.port, module = module)
 
-        // setup health check
-        val doRegCheckEnv = System.getenv("doRegCheck")
-        val doRegCheck = if (doRegCheckEnv != null) doRegCheckEnv == "true" else config.doRegCheck
-        val check = if (doRegCheck) {
-            ImmutableRegCheck.builder()
-                .http(System.getenv("consulRefUrl") ?: config.consulRefUrl)
-                .interval("10s")
-                .deregisterCriticalServiceAfter("1m")
-                .build()
-        } else { null }
-
         // if in docker container, auto grab own address
         val myAddress = if (config.isRunningInsideDocker()) {
             val hosts = File("/etc/hosts")
             val hostLine = hosts.readLines().last().split("\\s".toRegex())
             hostLine.first()
-        } else { null }
+        } else {
+            null
+        }
 
-        // setup consul
-        consul = Consul.builder().withUrl(System.getenv("consulUrl") ?: config.consulUrl).build()
-        val builder = ImmutableRegistration.builder()
-            .id(config.id)
-            .tags(config.tags)
-            .name(config.name)
-            .address(myAddress ?: config.consulAddr)
-            .meta(metadata)
-            .port(config.port)
-        if (check != null) builder.addChecks(check)
-        consul.agentClient().register(builder.build())
+        // assemble service info
+        myServiceInfo = ServiceInfo(
+            config.id, config.name, config.tags,
+            "http://$myAddress:${config.port}"
+        )
+
+        // register if necessary
+        if (doRegister) request(
+            "$registerUrl/add",
+            myServiceInfo.toJson()
+        )
 
         // start server
         server.start(wait = false)
@@ -205,9 +176,16 @@ class Microservice(
 
     // function that stops everything
     fun dispose(hidden: Boolean = false) {
-        consul.agentClient().deregister(config.id)
-        serviceCacheThread.join(100)
+        // deregister if necessary
+        if (doRegister) request(
+            "$registerUrl/remove",
+            myServiceInfo.toJson()
+        )
+
+        // stop the rest
+        serviceCacheThread?.join(100)
         server.stop(1000, 1000)
+
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")
     }
 }

@@ -9,32 +9,47 @@ networks:
       config:
         - subnet: 172.90.0.0/24
 services:
-  consul:
-    image: consul:latest
+#  consul:
+#    image: consul:latest
+#    ports:
+#      - "8500:8500"
+#    networks:
+#      dmtestrig:
+#        ipv4_address: 172.90.0.2
+  register:
+    image: daylinmicroservices/register
     ports:
-      - "8500:8500"
+      - "2999:2999"
+    environment:
+      - port=2999
     networks:
       dmtestrig:
-        ipv4_address: 172.90.0.2
+        ipv4_address: 172.90.0.3
   test0:
     image: daylinmicroservices/tester
     ports:
       - "2000:2000"
+    depends_on:
+      - register
     environment:
       - port=2000
+      - registerUrl=http://172.90.0.3:2999
       - consulUrl=http://172.90.0.2:8500
       - consulRefUrl=http://172.90.0.5:2000
     networks:
       dmtestrig:
-        ipv4_address: 172.90.0.3
+        ipv4_address: 172.90.0.4
   test1:
     image: daylinmicroservices/tester
     ports:
       - "2001:2001"
+    depends_on:
+      - register
     environment:
-      - port=2000
+      - port=2001
+      - registerUrl=http://172.90.0.3:2999
       - consulUrl=http://172.90.0.2:8500
       - consulRefUrl=http://172.90.0.5:2001
     networks:
       dmtestrig:
-        ipv4_address: 172.90.0.4
+        ipv4_address: 172.90.0.5
