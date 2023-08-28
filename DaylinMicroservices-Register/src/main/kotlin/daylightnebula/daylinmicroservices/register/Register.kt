@@ -2,18 +2,15 @@ package daylightnebula.daylinmicroservices.register
 
 import daylightnebula.daylinmicroservices.core.*
 import daylightnebula.daylinmicroservices.core.requests.request
-import daylightnebula.daylinmicroservices.redis.RedisConnection
-import daylightnebula.daylinmicroservices.redis.RedisJSONArray
 import daylightnebula.daylinmicroservices.serializables.Result
 import daylightnebula.daylinmicroservices.serializables.Schema
 import mu.KotlinLogging
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.*
 import kotlin.concurrent.thread
 
 val serviceTable = mutableListOf<ServiceEntry>()
-lateinit var redisSave: RedisJSONArray
-var changeOccurred = false
 val logger = KotlinLogging.logger("Service Register")
 
 // setup config for the microservice
@@ -75,12 +72,6 @@ val checkAliveThread = loopingThread(1000) {
             }
         }
     }
-
-    // if a change the service table changed, update redis if initialized
-    if (changeOccurred && ::redisSave.isInitialized) {
-        redisSave.set(JSONArray().putAll(serviceTable.map { it.toJson() }))
-        changeOccurred = false
-    }
 }
 
 fun addService(newService: Service) {
@@ -94,8 +85,6 @@ fun addService(newService: Service) {
 
     // broadcast event
     sendEventToListeners(entry, ServiceEvent.ADDED)
-
-    changeOccurred = true
 }
 
 fun removeService(old: ServiceEntry) {
@@ -103,7 +92,6 @@ fun removeService(old: ServiceEntry) {
     serviceTable.remove(old)
     logger.info("Removing service ${old.service}")
     sendEventToListeners(old, ServiceEvent.REMOVED)
-    changeOccurred = true
 }
 
 fun sendEventToListeners(svc: ServiceEntry, event: ServiceEvent) {
@@ -113,17 +101,6 @@ fun sendEventToListeners(svc: ServiceEntry, event: ServiceEvent) {
 }
 
 fun main() {
-    // setup redis if an address was given as an env variable
-    if (System.getenv("redisAddress") != null) {
-        // setup redis
-        RedisConnection.init()
-        redisSave = RedisJSONArray("_dm_services", JSONArray())
-
-        // update table from redis
-        serviceTable.clear()
-        serviceTable.addAll(redisSave.get().map { ServiceEntry(it as JSONObject) })
-    }
-
     // start service
     service.start()
 
