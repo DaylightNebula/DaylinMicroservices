@@ -23,7 +23,7 @@ val service = Microservice(
 val pingThread = loopingThread(1000) {
     service.getServices().forEach { (name, other) ->
         service.request(other, "ping", JSONObject()).whenComplete { result, _ ->
-            if (result.isError()) println("PING FAILED WITH ERROR: ${result.error()}")
+            if (result.isError()) println("PING FAILED WITH ERROR (sometimes false positive on initialize of test rig): ${result.error()}, Address: ${other.address}")
 //            else println("ping success")
         }
     }

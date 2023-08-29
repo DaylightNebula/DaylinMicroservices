@@ -38,7 +38,7 @@ internal object Requester {
             try {
                 JSONObject(text).toResult()
             } catch (ex: JSONException) {
-                val error = "Invalid input json received: $text"
+                val error = "MInvalid input json received: $text"
                 logger.error(error)
                 Result.Error(error)
             }

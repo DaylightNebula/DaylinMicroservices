@@ -19,6 +19,8 @@ import kotlin.collections.HashMap
 class Microservice(
     internal val config: MicroserviceConfig,
     private val endpoints: HashMap<String, Pair<Schema, (json: JSONObject) -> Result<JSONObject>>>,
+
+    // some config options
     private val debugRequests: Boolean = false,
     private val doRegister: Boolean = true,
 
@@ -39,41 +41,46 @@ class Microservice(
 
     // service cache
     private lateinit var serviceCache: MutableMap<UUID, ServiceInfo>
-    private val serviceCacheThread = if (doRegister) loopingThread(1000) {
-        if (!this::myServiceInfo.isInitialized) return@loopingThread
+    private var lastCacheUpdate = System.currentTimeMillis()
+    private fun updateServiceCache() {
+        if (!doRegister || !this::myServiceInfo.isInitialized) return
 
         // send get request to register
-        request("$registerUrl/get", JSONObject()).whenComplete { result, _ ->
-            // if result is ok, process it, otherwise, log error
-            if (result.isOk()) {
-                // get current services map
-                val curServices = result.unwrap().getJSONArray("services").map {
-                    val info = ServiceInfo(it as JSONObject)
-                    info.id to info
-                }.toMap()
+        val result = request("$registerUrl/get", JSONObject()).get()
 
-                // if service cache is not initialized, initialize with current services
-                if (!this::serviceCache.isInitialized) {
-                    serviceCache = curServices.toMutableMap()
-                    return@whenComplete
-                }
-
-                // check for any new services (anything in new service list that isn't in the cache)
-                val newServices = curServices.filter { !serviceCache.contains(it.key) }
-                newServices.forEach {
-                    serviceCache[it.key] = it.value
-                    onServiceOpen(it.value)
-                }
-
-                // check if there are any services that closed
-                val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
-                oldServices.forEach {
-                    serviceCache.remove(it.key)
-                    onServiceClose(it.value)
-                }
-            } else config.logger.error("Register get request failed with error: ${result.error()}")
+        // if error, log and cancel
+        if (result.isError()) {
+            config.logger.error("Register get request failed with error: ${result.error()}")
+            return
         }
-    } else null
+
+        // get current services map
+        val curServices = result.unwrap().getJSONArray("services").map {
+            val info = ServiceInfo(it as JSONObject)
+            info.id to info
+        }.toMap()
+        lastCacheUpdate = System.currentTimeMillis()
+
+        // if service cache is not initialized, initialize with current services
+        if (!this::serviceCache.isInitialized) {
+            serviceCache = curServices.toMutableMap()
+            return
+        }
+
+        // check for any new services (anything in new service list that isn't in the cache)
+        val newServices = curServices.filter { !serviceCache.contains(it.key) }
+        newServices.forEach {
+            serviceCache[it.key] = it.value
+            onServiceOpen(it.value)
+        }
+
+        // check if there are any services that closed
+        val oldServices = serviceCache.filter { !curServices.containsKey(it.key) }
+        oldServices.forEach {
+            serviceCache.remove(it.key)
+            onServiceClose(it.value)
+        }
+    }
 
     // just start the server on this thread
     override fun run() {
@@ -104,20 +111,7 @@ class Microservice(
                 myServiceInfo.toJson()
             ).whenComplete { result, _ ->
                 // if add request succeeded, send first service get request
-                if (result.isOk()) request(
-                    "$registerUrl/get",
-                    JSONObject()
-                ).whenComplete { result, _ ->
-                    // if the first get request passed, initialize service cache with the results
-                    if (result.isOk()) {
-                        serviceCache = result.unwrap().getJSONArray("services").map {
-                            val info = ServiceInfo(it as JSONObject)
-                            info.id to info
-                        }.toMap().toMutableMap()
-                    }
-                    // otherwise, log error
-                    else config.logger.error("First service cache get request failed with error: ${result.error()}")
-                }
+                if (result.isOk()) updateServiceCache()
                 // otherwise, log error
                 else config.logger.error("Failed to register self with error: ${result.error()}")
             }
@@ -129,17 +123,36 @@ class Microservice(
     }
 
     // get service functions
-    fun getService(uuid: UUID): ServiceInfo? = safeCache { it[uuid] }
-    fun getServiceWithName(name: String): ServiceInfo? = safeCache { c -> c.asSequence().firstOrNull { it.value.name == name }?.value }
-    fun getServiceWithTag(tag: String): ServiceInfo? = safeCache { c -> c.asSequence().firstOrNull { it.value.tags.contains(tag) }?.value }
+    fun getService(uuid: UUID): ServiceInfo? = safeCacheProvider { it[uuid] }
+    fun getServiceWithName(name: String): ServiceInfo? = safeCacheProvider { c -> c.asSequence().firstOrNull { it.value.name == name }?.value }
+    fun getServiceWithTag(tag: String): ServiceInfo? = safeCacheProvider { c -> c.asSequence().firstOrNull { it.value.tags.contains(tag) }?.value }
     fun getServices(): Map<UUID, ServiceInfo> = safeCache()
-    fun getServicesWithName(name: String): Map<UUID, ServiceInfo> = safeCache { c -> c.filter { it.value.name == name } }
-    fun getServicesWithTag(tag: String): Map<UUID, ServiceInfo> = safeCache { c -> c.filter { it.value.tags.contains(tag) } }
+    fun getServicesWithName(name: String): Map<UUID, ServiceInfo> = safeCacheProvider { c -> c.filter { it.value.name == name } }
+    fun getServicesWithTag(tag: String): Map<UUID, ServiceInfo> = safeCacheProvider { c -> c.filter { it.value.tags.contains(tag) } }
 
-    // get helper functions
-    fun <T: Any?> safeCache(callback: (cache: Map<UUID, ServiceInfo>) -> T): T =
-        callback(safeCache())
-    fun safeCache(): Map<UUID, ServiceInfo> = if (this::serviceCache.isInitialized) serviceCache else mapOf()
+    // Provides a cache that is guaranteed to exist to the callback.  That callback may be rerun after a cache update if it returns nothing the first time
+    fun <T: Any?> safeCacheProvider(callback: (cache: Map<UUID, ServiceInfo>) -> T): T {
+        // call callback for a result a first time
+        var result = callback(safeCache())
+
+        // if no result or a blank map, update the service cache and try again
+        if (result == null || (result is Map<*, *> && result.isEmpty())) {
+            updateServiceCache()
+            result = callback(safeCache())
+        }
+
+        // return the result
+        return result
+    }
+
+    // Returns a service cache that is guaranteed to be initialized.  This will automatically update the service cache if it out of date.
+    fun safeCache(): Map<UUID, ServiceInfo> {
+        // if service cache is out of date, update service cache
+        if (System.currentTimeMillis() - lastCacheUpdate > config.maxServiceCacheAge) updateServiceCache()
+
+        // return service cache if it is initialized
+        return if (this::serviceCache.isInitialized) serviceCache else mapOf()
+    }
 
     // function that just sets up default "/" endpoint and "/info" endpoints
     private fun setupDefaults() {
@@ -213,7 +226,6 @@ class Microservice(
         )
 
         // stop the rest
-        serviceCacheThread?.join(100)
         server.stop(1000, 1000)
 
         config.logger.info("Shutdown ${config.id}, hidden = $hidden")

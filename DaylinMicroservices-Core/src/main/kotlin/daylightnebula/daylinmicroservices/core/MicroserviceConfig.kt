@@ -21,24 +21,13 @@ data class MicroserviceConfig(
     val name: String,                   // the name of the microservice
     val tags: List<String>,             // the tags of the microservice, like what its type is
     var port: Int = System.getenv("port")?.toIntOrNull() ?: 0,
-        // the port that this service will run on
-    var consulUrl: String = System.getenv("consulUrl") ?: "",
-        // the url that consul is on
-    var consulRefUrl: String = System.getenv("consulRefUrl") ?: "",
-        // this is what consul will use to reference this microservice
-    val consulAddr: String = System.getenv("consulAddr") ?: "localhost",
+    val maxServiceCacheAge: Long = System.getenv("maxServiceCacheAge")?.toLongOrNull() ?: 60000L,
     val doRegCheck: Boolean = true,     // allow consul to periodically perform a check to see if the service is active
     val logger: Logger =                // the logger that this service will write its output too
         KotlinLogging.logger("Microservice $name")
 ) {
-    init {
-        // make sure port is set
-        setupPort()
-
-        // make sure consul addresses are setup
-        setupConsulUrl()
-        setupConsulRefUrl()
-    }
+    // make sure port is set
+    init { setupPort() }
 
     // load from a json object
     constructor(json: JSONObject): this(
@@ -46,8 +35,7 @@ data class MicroserviceConfig(
         json.optString("name", ""),
         json.optJSONArray("tags")?.map { it as String } ?: listOf(),
         json.optInt("port", 0),
-        json.optString("consulUrl", ""),
-        json.optString("consulRefUrl", "")
+        json.optLong("maxServiceCacheAge", 60000)
     )
 
     // load from a json object in a file
@@ -65,29 +53,6 @@ data class MicroserviceConfig(
         port = sSocket.localPort
         sSocket.close()
         logger.info("Found open port $port")
-    }
-
-    // function that sets up the consul url to defaults if necessary
-    private fun setupConsulUrl() {
-        // make sure consul url is blank
-        if (consulUrl.isNotBlank()) return
-
-        // set consul url
-        consulUrl = if (isRunningInsideDocker()) "http://host.docker.internal:8500" else "http://localhost:8500"
-    }
-
-    // function that sets the consul ref url to defaults if necessary
-    private fun setupConsulRefUrl() {
-        // make sure consul ref url is blank
-        if (consulRefUrl.isNotBlank()) return
-
-        // get my ip
-        val whatismyip = URL("http://checkip.amazonaws.com")
-        val `in` = BufferedReader(InputStreamReader(whatismyip.openStream()))
-        val ip = `in`.readLine()
-
-        // set consul ref url
-        consulRefUrl = "http://$ip:${port}/"
     }
 
     // function that checks if this process is running in a docker container
