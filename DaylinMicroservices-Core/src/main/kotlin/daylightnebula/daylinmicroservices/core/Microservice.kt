@@ -100,7 +100,8 @@ class Microservice(
         // assemble service info
         myServiceInfo = ServiceInfo(
             config.id, config.name, config.tags,
-            "http://$myAddress:${config.port}"
+            "http://$myAddress:${config.port}",
+            config.doRegCheck, config.regCheckInterval
         )
 
         // register if necessary
@@ -177,6 +178,16 @@ class Microservice(
                         .put("endpoints", JSONArray().putAll(endpoints.keys))
                 )
             else result
+        }
+
+        // do the same for register_ping
+        val regCallback = endpoints["register_ping"] ?: (Schema() to { _ -> Result.Ok(JSONObject()) })
+        endpoints["register_ping"] = regCallback.first to {
+            // update service cache if cache is dirty
+            if (it.getBoolean("isCacheDirty")) updateServiceCache()
+
+            // pass back callback result
+            regCallback.second(it)
         }
     }
 

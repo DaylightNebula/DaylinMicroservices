@@ -21,9 +21,21 @@ data class MicroserviceConfig(
     val name: String,                   // the name of the microservice
     val tags: List<String>,             // the tags of the microservice, like what its type is
     var port: Int = System.getenv("port")?.toIntOrNull() ?: 0,
-    val maxServiceCacheAge: Long = System.getenv("maxServiceCacheAge")?.toLongOrNull() ?: 60000L,
-    val doRegCheck: Boolean = true,     // allow consul to periodically perform a check to see if the service is active
-    val logger: Logger =                // the logger that this service will write its output too
+
+    // the max age of the service cache in milliseconds
+    val maxServiceCacheAge: Long =
+        System.getenv("maxServiceCacheAge")?.toLongOrNull() ?: 60000L,
+
+    // allow the register to periodically perform a check to see if the service is active
+    val doRegCheck: Boolean =
+        System.getenv("doRegCheck")?.let { it == "true" } ?: true,
+
+    // an interval in milliseconds that determines how often the register will check if this service is active
+    val regCheckInterval: Long =
+        System.getenv("regCheckInterval")?.toLongOrNull() ?: 10000L,
+
+    // the logger that this service will write its output too
+    val logger: Logger =
         KotlinLogging.logger("Microservice $name")
 ) {
     // make sure port is set
